@@ -102,7 +102,7 @@
       var forbid = {};
       (s.joursInterdits || []).forEach(function (w) { forbid[w] = 1; });
       return { s: s, row: row, lock: lock, credit: credit, target: targetDays(s, info), forbid: forbid,
-        maxRun: +s.maxSuite > 0 ? +s.maxSuite : 0 };
+        maxRun: (s.id === 'r' || /^rachel$/i.test(s.prenom || '')) ? Math.min(3, +s.maxSuite > 0 ? +s.maxSuite : 3) : (+s.maxSuite > 0 ? +s.maxSuite : 0) };
     });
   }
 
@@ -292,7 +292,7 @@
       }
       for (p = 0; p < N; p++) {
         var row = g[p], a = P[p], worked = 0, we = 0, prevBlock = false, cnt4 = { C1: 0, M5: 0, M1: 0, D2: 0 }, shiftDays = 0;
-        var isolatedOK = a.s.id === 'r' || /^ra(chel)?$/i.test(a.s.prenom || '');
+        var isolatedOK = false;
         var mr = a.maxRun, prevLen = -1, restLen = -1, segStart = 0, d2run = false, c1run = false;
         for (i = 0; i <= D; i++) {
           var w = i < D && isWork(row[i]);
@@ -311,7 +311,7 @@
           if (i === D || (i > 0 && w !== prevW)) {
             var len = i - segStart, edge = segStart === 0 || i === D;
             if (i > 0 && prevW) {
-              if (len > mr) sc += 3000 * (len - mr);
+              if (len > mr) sc += (a.s.id === 'r' || /^rachel$/i.test(a.s.prenom || '') ? 100000 : 3000) * (len - mr);
               else if (len === 1 && !edge && !isolatedOK) sc += 350;
               else if (len === 3) sc += 0;
               else if (len === 4) sc += 100;
