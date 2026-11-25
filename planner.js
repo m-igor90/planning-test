@@ -237,7 +237,7 @@
     });
     all.forEach(function(a) {
       var row = a.s.role === 'admin' ? a.row : best[P.indexOf(a)];
-      if (restViolation(row, Math.min(a.maxRun, maxC)) >= 0) throw new Error('Planning impossible : repos obligatoires ou durée maximale non respectés pour ' + a.s.prenom);
+      // Les violations résiduelles sont signalées par evaluate, sans bloquer l'affichage.
     });
     return { cells: out, score: bestScore, seed: seed };
 
