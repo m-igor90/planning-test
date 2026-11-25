@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Planning Soins Domaine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout : feuille de planning mensuelle — barre d'outils, palette de codes, grille personnes × jours, alertes. */
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --ink: #1a2330; --muted: #5b6878; --line: #d9e0e8; --line-soft: #e9edf2;
+  --accent: #155e75; --accent-ink: #ffffff; --accent-soft: #e2eff3;
+  --we: #eaeef3; --hol: #fbece2; --hol-ink: #a24a17;
+  --ok: #2b7a3d; --warn: #a86500; --err: #c0392b; --err-soft: #fbe5e2;
+  --c1: #4a46b0; --c1-bg: #ebeafc; --m1: #2d7a38; --m1-bg: #e4f3e6; --m5: #0b766e; --m5-bg: #dcf2ef;
+  --d2: #946000; --d2-bg: #fbefd6; --cs: #2a78ba; --t: #2f97cf; --r: #55657a; --f: #8a5a3c; --n: #c0392b;
+  --palm: #2f8a4c; --sand: #f3e7c4;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161c; --surface: #19202a; --ink: #e5eaf0; --muted: #94a2b2; --line: #2c3643; --line-soft: #232c37;
+  --accent: #5fb4cc; --accent-ink: #0d1a20; --accent-soft: #1b3440;
+  --we: #1f2732; --hol: #3a2619; --hol-ink: #f0a477;
+  --ok: #6cc684; --warn: #e6a740; --err: #f07a6c; --err-soft: #3d1f1c;
+  --c1: #a9a6ff; --c1-bg: #2a2950; --m1: #84d293; --m1-bg: #1d3524; --m5: #6fd6ca; --m5-bg: #173532;
+  --d2: #f0c063; --d2-bg: #3a2f17; --cs: #4d9be0; --t: #4fb5e6; --r: #7c8ca1; --f: #b98461; --n: #e2594b;
+  --palm: #6cc684; --sand: #3b3420; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19202a; --ink: #e5eaf0; --muted: #94a2b2; --line: #2c3643; --line-soft: #232c37;
+  --accent: #5fb4cc; --accent-ink: #0d1a20; --accent-soft: #1b3440;
+  --we: #1f2732; --hol: #3a2619; --hol-ink: #f0a477;
+  --ok: #6cc684; --warn: #e6a740; --err: #f07a6c; --err-soft: #3d1f1c;
+  --c1: #a9a6ff; --c1-bg: #2a2950; --m1: #84d293; --m1-bg: #1d3524; --m5: #6fd6ca; --m5-bg: #173532;
+  --d2: #f0c063; --d2-bg: #3a2f17; --cs: #4d9be0; --t: #4fb5e6; --r: #7c8ca1; --f: #b98461; --n: #e2594b;
+  --palm: #6cc684; --sand: #3b3420; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 48px; }
+.wrap { max-width: 1500px; margin: 0 auto; display: grid; gap: 14px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 700; letter-spacing: .01em; margin: 0; text-wrap: balance; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* En-tête */
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; justify-content: space-between; }
+.brand { display: grid; gap: 2px; min-width: 0; }
+.brand .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
+.brand h1 { font-size: 28px; line-height: 1.05; }
+.month { display: flex; align-items: center; gap: 6px; }
+.month h2 { font-size: 24px; min-width: 9.5ch; text-align: center; text-transform: capitalize; }
+.iconbtn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.iconbtn:hover { border-color: var(--accent); }
+.status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.status.busy .dot { background: var(--warn); }
+.status.off .dot { background: var(--muted); }
+
+/* Barre d'outils */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+.spacer { flex: 1; }
+
+/* Résumé */
+.summary { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { border-radius: 999px; padding: 4px 10px; font-size: 12.5px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); }
+.pill.ok { color: var(--ok); }
+.pill.err { color: var(--err); background: var(--err-soft); border-color: transparent; }
+.pill.warn { color: var(--warn); }
+
+/* Palette */
+.palette { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.palette .lbl { font-size: 12px; color: var(--muted); margin-right: 4px; }
+.brush { min-width: 40px; height: 34px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); font-family: var(--f-display); font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.brush[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.brush small { font-family: var(--f-body); font-weight: 500; font-size: 11px; color: var(--muted); }
+.sep { width: 1px; height: 24px; background: var(--line); margin: 0 2px; }
+.hint { font-size: 12px; color: var(--muted); }
+
+/* Grille */
+.gridwrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table.grid { border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+.grid th, .grid td { border-bottom: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); padding: 0; text-align: center; }
+.grid thead th { font-weight: 600; font-size: 11.5px; color: var(--muted); background: var(--surface); }
+.grid .wk th { font-size: 10.5px; height: 16px; border-bottom: 0; }
+.grid .dn th { padding: 3px 0; }
+.grid .dn .num { display: block; font-family: var(--f-display); font-size: 16px; color: var(--ink); line-height: 1; }
+.grid .col-name { position: sticky; left: 0; z-index: 2; background: var(--surface); text-align: left; padding: 0 8px; min-width: 132px; max-width: 160px; border-right: 1px solid var(--line); }
+.grid thead .col-name { z-index: 3; }
+.grid .name { display: block; font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid .meta { font-size: 11px; color: var(--muted); }
+.grid .group th { text-align: left; font-family: var(--f-display); text-transform: uppercase; letter-spacing: .1em; font-size: 12.5px; color: var(--accent); padding: 8px 8px 4px; background: var(--surface); }
+.grid .group th.col-name { position: sticky; left: 0; }
+.grid td.c { width: 34px; min-width: 34px; height: 34px; }
+.grid .we { background: var(--we); }
+.grid .hol { background: var(--hol); }
+.grid thead .hol .num, .grid thead .hol { color: var(--hol-ink); }
+.cell { width: 100%; height: 34px; border: 0; background: transparent; padding: 2px; display: grid; place-items: center; position: relative; }
+.cell:disabled { cursor: default; }
+.code { font-family: var(--f-display); font-weight: 700; font-size: 14px; line-height: 1; border-radius: 4px; padding: 3px 3px; min-width: 28px; display: inline-block; }
+.code.C1 { color: var(--c1); background: var(--c1-bg); box-shadow: inset 0 0 0 1.5px var(--c1); }
+.code.M1 { color: var(--m1); background: var(--m1-bg); box-shadow: inset 0 0 0 1.5px var(--m1); }
+.code.M5 { color: var(--m5); background: var(--m5-bg); box-shadow: inset 0 0 0 1.5px var(--m5); }
+.code.D2 { color: var(--d2); background: var(--d2-bg); box-shadow: inset 0 0 0 1.5px var(--d2); }
+.code.CS { color: #fff; background: var(--cs); }
+.code.T { color: #fff; background: var(--t); }
+.code.R { color: #fff; background: var(--r); }
+.code.F { color: #fff; background: var(--f); }
+.code.N { color: #fff; background: var(--n); }
+.code.V { background: var(--sand); padding: 1px 4px; }
+.code.X { padding: 0; min-width: 0; }
+.rest { color: var(--muted); opacity: .6; font-size: 16px; line-height: 1; }
+.cell.locked::after { content: ""; position: absolute; top: 2px; right: 2px; width: 0; height: 0; border-top: 6px solid var(--accent); border-left: 6px solid transparent; }
+.cell.flag { background: var(--err-soft); }
+.grid td.sum { padding: 0 8px; font-size: 12.5px; white-space: nowrap; }
+.grid th.sum { padding: 0 8px; }
+.sum.mix b { font-weight: 700; } .k-C1 { color: var(--c1); } .k-M5 { color: var(--m5); } .k-M1 { color: var(--m1); } .k-D2 { color: var(--d2); }
+.sum .neg { color: var(--err); } .sum .pos { color: var(--ok); }
+.grid tr.cov td, .grid tr.cov th { background: var(--surface); }
+.grid tr.cov.first td, .grid tr.cov.first th { border-top: 2px solid var(--line); }
+.cov .okm { color: var(--ok); font-weight: 700; }
+.cov .miss { color: var(--err); font-weight: 700; background: var(--err-soft); display: block; height: 100%; line-height: 26px; }
+.cov .dup { color: var(--warn); font-weight: 700; }
+.cov .na { color: var(--muted); opacity: .5; }
+.grid tr.cov td { height: 26px; font-size: 12px; }
+
+/* Panneaux */
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { font-size: 19px; }
+.issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 260px; overflow: auto; }
+.issues li { display: flex; gap: 8px; align-items: baseline; font-size: 13px; }
+.issues .tag { font-family: var(--f-display); font-weight: 700; min-width: 54px; }
+.issues .err .tag { color: var(--err); } .issues .warn .tag { color: var(--warn); } .issues .info .tag { color: var(--muted); }
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 14px; font-size: 13px; }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.muted { color: var(--muted); }
+.note { font-size: 12.5px; color: var(--muted); max-width: 70ch; }
+
+/* Équipe & règles */
+.settings { display: grid; gap: 14px; }
+.staff-list { display: grid; gap: 8px; }
+.staff-row { display: grid; grid-template-columns: minmax(90px, 1.1fr) minmax(90px, 1.1fr) 64px 118px 128px auto 64px 64px 64px 36px; gap: 6px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line-soft); }
+.staff-head { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; border-bottom: 0; padding-bottom: 0; }
+.staff-row input[type=text], .staff-row input[type=number], .staff-row select, .rules input { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 6px 7px; background: var(--bg); }
+.days7 { display: flex; gap: 2px; }
+.days7 button { width: 22px; height: 26px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); font-size: 11px; font-weight: 700; padding: 0; }
+.days7 button[aria-pressed="true"] { background: var(--err); color: #fff; border-color: var(--err); }
+.chk { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+@media (max-width: 980px) {
+  .staff-head { display: none; }
+  .staff-row { grid-template-columns: 1fr 1fr; }
+  .staff-row > * { min-width: 0; }
+  .staff-row [data-lbl]::before { content: attr(data-lbl); display: block; font-size: 11px; color: var(--muted); }
+}
+.rules { display: flex; flex-wrap: wrap; gap: 12px; }
+.rules label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); width: 190px; }
+.hol-days { display: flex; flex-wrap: wrap; gap: 4px; }
+.hol-days button { width: 34px; height: 30px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); font-size: 12px; font-weight: 600; padding: 0; }
+.hol-days button.we { color: var(--muted); }
+.hol-days button[aria-pressed="true"] { background: var(--hol); color: var(--hol-ink); border-color: var(--hol-ink); }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--err-soft); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); padding: 8px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 20; }
+@media (prefers-reduced-motion: no-preference) { .cell .code { transition: transform .12s; } .cell:hover .code { transform: scale(1.08); } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">LJD · Soins Domaine · Delémont</span>
+      <h1>Planning infirmier</h1>
+    </div>
+    <div class="month">
+      <button class="iconbtn" id="prev" aria-label="Mois précédent">‹</button>
+      <h2 id="monthTitle">janvier 2027</h2>
+      <button class="iconbtn" id="next" aria-label="Mois suivant">›</button>
+    </div>
+    <div class="status off" id="status"><span class="dot"></span><span id="statusTxt">Chargement…</span></div>
+  </header>
+
+  <div class="toolbar" id="toolbar">
+    <button class="btn primary" id="genBtn">Générer le planning</button>
+    <button class="btn" id="undoBtn" disabled>Annuler</button>
+    <button class="btn" id="clearBtn">Effacer le généré</button>
+    <span class="spacer"></span>
+    <button class="btn" id="exportBtn">Exporter (CSV)</button>
+    <button class="btn" id="settingsBtn" aria-expanded="false">Équipe &amp; règles</button>
+  </div>
+  <div id="confirmZone"></div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="palette" id="palette"></div>
+
+  <div class="gridwrap" id="gridwrap"><div class="empty">Chargement du planning…</div></div>
+
+  <section class="panel" id="exportPanel" hidden>
+    <h3>Export CSV</h3>
+    <p class="note">Copiez ce texte et collez-le dans Excel (séparateur point-virgule).</p>
+    <textarea class="csv" id="csvText" readonly></textarea>
+    <div><button class="btn" id="copyCsv">Copier</button> <button class="btn" id="closeCsv">Fermer</button></div>
+  </section>
+
+  <section class="panel settings" id="settings" hidden></section>
+
+  <div class="cols">
+    <section class="panel">
+      <h3>À vérifier</h3>
+      <ul class="issues" id="issues"></ul>
+    </section>
+    <section class="panel">
+      <h3>Codes et règles appliquées</h3>
+      <div class="legend" id="legend"></div>
+      <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune (Rachel : 3), répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (Magali : jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="planner.js"></script>
+<script>
+(function () {
+  'use strict';
+  var P = window.Planner;
+  var MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  var DOW2 = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
+  var DOW1 = ['D','L','M','M','J','V','S'];
+  var CODES = {
+    C1: 'Soir', M5: 'Matin', M1: 'Matin', D2: 'Jour (semaine)',
+    CS: 'Journée administrative', T: 'Tutorat', R: 'Réunion', F: 'Formation', N: 'Nuit',
+    V: 'Vacances', X: 'Désir de congé'
+  };
+  var BRUSHES = [['C1','M5','M1','D2'], ['CS','T','R','F','N'], ['V','X'], ['pin','erase']];
+  var PALM = '<svg width="20" height="18" viewBox="0 0 20 18" aria-hidden="true"><path d="M10 7 C9 11 9.6 14 9 17" stroke="var(--palm)" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M10 7 C7 3 3 4 1.5 6.5 C4 5.5 7 6 10 7 Z M10 7 C13 3 17 4 18.5 6.5 C16 5.5 13 6 10 7 Z M10 7 C9 3.5 11 1.5 13.5 1 C11.5 3 10.8 5 10 7 Z M10 7 C8 4 6 2.5 4 2.6 C6.5 4 8.5 5.5 10 7 Z" fill="var(--palm)"/></svg>';
+  var CROSS = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3 L13 13 M13 3 L3 13" stroke="var(--err)" stroke-width="2.6" stroke-linecap="round"/></svg>';
+
+  var state = {
+    y: 2027, m: 1,
+    team: null,          // {staff:[], rules:{}}
+    plan: null,          // {year, month, holidays, cells}
+    brush: 'X', settingsOpen: false, canWrite: true, mode: 'loading', undo: []
+  };
+  var db = null, downloads = null, unsubPlan = null, timers = {}, pending = {}, writing = {};
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function key() { return state.y + '-' + String(state.m).padStart(2, '0'); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function toast(t) { var el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { el.hidden = true; }, 2600); }
+  function fmtH(h) { var s = h < 0 ? '−' : h > 0 ? '+' : ''; var a = Math.round(Math.abs(h) * 60); return s + Math.floor(a / 60) + 'h' + String(a % 60).padStart(2, '0'); }
+  function displayName(s) { return ((s.prenom || '') + ' ' + (s.nom || '')).trim() || 'Sans nom'; }
+  function rules() { var r = (state.team && state.team.rules) || {}; return { hpd: r.hpd || (8 + 25 / 60), maxConsecutive: r.maxConsecutive || 5, tutoratMax: r.tutoratMax === undefined ? 2 : r.tutoratMax, fillHours: r.fillHours !== false, renfort: r.renfort || 'D2' }; }
+  function staff() { return (state.team && state.team.staff) || []; }
+  function defaultPlan() { return { year: state.y, month: state.m, holidays: P.holidaysJura(state.y, state.m), cells: {} }; }
+  function isoWeek(y, m, d) { var dt = new Date(Date.UTC(y, m - 1, d)); var day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day); var y0 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1)); return Math.ceil(((dt - y0) / 86400000 + 1) / 7); }
+
+  function setStatus(kind, txt) { var el = $('status'); el.className = 'status ' + kind; $('statusTxt').textContent = txt; }
+
+  /* ---------- stockage ---------- */
+  var LS = 'planning-soins-v1';
+  function lsRead() { try { return JSON.parse(localStorage.getItem(LS) || '{}'); } catch (e) { return {}; } }
+  function lsWrite(o) { try { localStorage.setItem(LS, JSON.stringify(o)); } catch (e) {} }
+
+  function save(what) {
+    if (!state.canWrite) return;
+    if (state.mode === 'local') {
+      var o = lsRead(); o.team = state.team; o.plans = o.plans || {}; o.plans[key()] = state.plan; lsWrite(o);
+      return;
+    }
+    if (!db) return;
+    var path = what === 'team' ? 'equipe/config' : 'plannings/' + key();
+    var body = what === 'team' ? clone(state.team) : clone(state.plan);
+    pending[path] = body;
+    clearTimeout(timers[path]);
+    setStatus('busy', 'Enregistrement…');
+    timers[path] = setTimeout(function () { flush(path); }, 700);
+  }
+  function flush(path) {
+    if (writing[path] || !pending[path]) return;
+    var body = pending[path]; pending[path] = null; writing[path] = true;
+    body.updatedAt = new Date().toISOString();
+    db.doc(path).set(body).then(function () {
+      writing[path] = false;
+      if (pending[path]) flush(path); else if (!Object.keys(pending).some(function (k) { return pending[k]; })) setStatus('ok', 'Enregistré');
+    }, function (e) {
+      writing[path] = false;
+      if (e && e.code === 'invalid_argument') { state.canWrite = false; render(); setStatus('off', 'Lecture seule'); }
+      else { pending[path] = pending[path] || body; setStatus('off', 'Non enregistré — nouvel essai…'); setTimeout(function () { flush(path); }, 2500); }
+    });
+  }
+  function busy(path) { return !!(timers[path] && (pending[path] || writing[path])); }
+
+  function subscribePlan() {
+    if (unsubPlan) { unsubPlan(); unsubPlan = null; }
+    state.plan = null; state.undo = [];
+    if (state.mode === 'local') {
+      var o = lsRead(); state.plan = (o.plans && o.plans[key()]) || defaultPlan(); render(); return;
+    }
+    var path = 'plannings/' + key(), k = key();
+    unsubPlan = db.doc(path).onSnapshot(function (snap) {
+      if (k !== key() || busy(path)) return;
+      state.plan = snap.exists ? clone(snap.data()) : defaultPlan();
+      if (!state.plan.cells) state.plan.cells = {};
+      if (!state.plan.holidays) state.plan.holidays = P.holidaysJura(state.y, state.m);
+      render();
+    }, function () { setStatus('off', 'Planning injoignable'); });
+    render();
+  }
+
+  function startLocal(reason) {
+    state.mode = 'local';
+    var o = lsRead();
+    state.team = o.team || { staff: [], rules: { hpd: 8 + 25 / 60, maxConsecutive: 5, tutoratMax: 2 } };
+    setStatus('off', reason || 'Mode local : enregistré dans ce navigateur');
+    subscribePlan();
+  }
+
+  async function boot() {
+    render();
+    if (!window.claude || !window.claude.use) { startLocal(); return; }
+    try { db = await window.claude.use('db'); } catch (e) { db = null; }
+    if (!db) { startLocal(); return; }
+    state.mode = 'db';
+    try {
+      var user = await window.claude.use('user');
+      if (user && user.can) { var c = await user.can('data.write'); if (c === false) state.canWrite = false; }
+    } catch (e) {}
+    window.claude.use('downloads').then(function (d) { downloads = d; }, function () {});
+    var loadTimer = setTimeout(function () { if (!state.team) setStatus('off', 'Données injoignables pour l’instant'); }, 10000);
+    db.doc('equipe/config').onSnapshot(function (snap) {
+      clearTimeout(loadTimer);
+      if (busy('equipe/config')) return;
+      state.team = snap.exists ? clone(snap.data()) : { staff: [], rules: { hpd: 8 + 25 / 60, maxConsecutive: 5, tutoratMax: 2 } };
+      if (!state.team.staff) state.team.staff = [];
+      if (!snap.metadata.fromCache) setStatus(state.canWrite ? 'ok' : 'off', state.canWrite ? 'Enregistré' : 'Lecture seule');
+      render();
+    }, function () { clearTimeout(loadTimer); setStatus('off', 'Équipe injoignable'); });
+    subscribePlan();
+  }
+
+  /* ---------- actions ---------- */
+  function pushUndo() { state.undo.push(clone({ cells: state.plan.cells, holidays: state.plan.holidays })); if (state.undo.length > 40) state.undo.shift(); }
+
+  function paint(sid, d) {
+    if (!state.canWrite || !state.plan) return;
+    var cells = state.plan.cells, row = cells[sid] || (cells[sid] = {}), cur = row[d] || '', b = state.brush;
+    var next;
+    if (b === 'erase') next = '';
+    else if (b === 'pin') { if (!cur) return; next = cur.charAt(0) === '!' ? cur.slice(1) : '!' + cur; }
+    else next = cur === '!' + b ? '' : '!' + b;
+    if (next === cur) return;
+    pushUndo();
+    if (next) row[d] = next; else delete row[d];
+    save('plan'); render();
+  }
+
+  function generate() {
+    if (!state.canWrite || !state.plan || !staff().length) return;
+    var btn = $('genBtn'); btn.disabled = true; btn.textContent = 'Génération…';
+    setTimeout(function () {
+      try {
+        pushUndo();
+        var res = P.generate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, seed: (Math.random() * 1e9) | 0 });
+        state.plan.cells = res.cells;
+        save('plan');
+        toast('Planning généré. Les cases fixées ont été gardées.');
+      } finally { btn.disabled = false; btn.textContent = 'Générer le planning'; render(); }
+    }, 40);
+  }
+
+  function clearGenerated() {
+    var z = $('confirmZone');
+    z.innerHTML = '<div class="confirm"><span>Effacer tous les horaires générés de ' + MONTHS[state.m - 1] + ' ? Les cases saisies à la main restent.</span><button class="btn" id="cYes">Effacer</button><button class="btn" id="cNo">Garder</button></div>';
+    $('cNo').onclick = function () { z.innerHTML = ''; };
+    $('cYes').onclick = function () {
+      z.innerHTML = ''; pushUndo();
+      Object.keys(state.plan.cells).forEach(function (sid) { var r = state.plan.cells[sid]; Object.keys(r).forEach(function (d) { if (r[d].charAt(0) !== '!') delete r[d]; }); });
+      save('plan'); render(); toast('Horaires générés effacés');
+    };
+  }
+
+  function undo() {
+    var u = state.undo.pop(); if (!u) return;
+    state.plan.cells = u.cells; state.plan.holidays = u.holidays; save('plan'); render();
+  }
+
+  function csv() {
+    var ev = evaluation(); var info = ev.info, lines = [];
+    var head = ['Nom', 'Taux'];
+    info.days.forEach(function (d) { head.push(DOW2[d.dow] + ' ' + d.d); });
+    head.push('Jours prévus', 'Jours dus', 'Week-ends', 'Solde (h)');
+    lines.push(head.join(';'));
+    staff().forEach(function (s, i) {
+      var row = [displayName(s), s.taux + '%'], cells = state.plan.cells[s.id] || {}, p = ev.people[i];
+      info.days.forEach(function (d) { var v = P.parseCell(cells[d.d]).c; row.push(v === 'X' ? 'x' : v); });
+      row.push(p.worked + p.credit, p.target, p.we, (Math.round(p.balance * 100) / 100).toString().replace('.', ','));
+      lines.push(row.map(function (c) { c = String(c); return /[;"\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';'));
+    });
+    return '﻿' + lines.join('\r\n');
+  }
+  function saveFile(name, text, mime, fallback) {
+    if (downloads) {
+      downloads.save({ filename: name, data: text }).then(function () { toast('Fichier exporté'); }, function () { fallback(text); });
+    } else if (!window.claude) {
+      // page hébergée ailleurs (GitHub Pages, fichier local) : téléchargement classique
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+      a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      toast('Fichier exporté');
+    } else fallback(text);
+  }
+  function exportCsv() { saveFile('planning-soins-' + key() + '.csv', csv(), 'text/csv;charset=utf-8', showCsv); }
+  function exportJson() {
+    var plans = {};
+    if (state.mode === 'local') plans = lsRead().plans || {};
+    if (state.plan) plans[key()] = state.plan;
+    var text = JSON.stringify({ app: 'planning-soins', version: 1, team: state.team, plans: plans }, null, 1);
+    saveFile('planning-soins-sauvegarde.json', text, 'application/json', showCsv);
+  }
+  function importJson(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var o;
+      try { o = JSON.parse(reader.result); } catch (e) { toast('Ce fichier n’est pas une sauvegarde valable'); return; }
+      if (!o || !o.team || !Array.isArray(o.team.staff)) { toast('Ce fichier ne contient pas d’équipe'); return; }
+      state.team = o.team; save('team');
+      var plans = o.plans || {}, ks = Object.keys(plans);
+      if (state.mode === 'local') { var ls = lsRead(); ls.team = o.team; ls.plans = Object.assign(ls.plans || {}, plans); lsWrite(ls); }
+      else if (db) ks.forEach(function (k) { if (/^\d{4}-\d{2}$/.test(k) && k !== key()) db.doc('plannings/' + k).set(plans[k]).catch(function () {}); });
+      if (plans[key()]) { state.plan = plans[key()]; save('plan'); }
+      render(); toast('Sauvegarde importée : ' + o.team.staff.length + ' personnes, ' + ks.length + ' mois');
+    };
+    reader.readAsText(file);
+  }
+  function showCsv(text) { $('csvText').value = text.replace(/^﻿/, ''); $('exportPanel').hidden = false; $('exportPanel').scrollIntoView({ block: 'nearest' }); }
+
+  /* ---------- rendu ---------- */
+  var evCache = null;
+  function evaluation() {
+    evCache = P.evaluate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells });
+    return evCache;
+  }
+
+  function renderPalette() {
+    var el = $('palette');
+    if (!state.canWrite) { el.innerHTML = '<span class="hint">Lecture seule : vous pouvez consulter le planning.</span>'; return; }
+    var h = '<span class="lbl">Saisir :</span>';
+    BRUSHES.forEach(function (grp, gi) {
+      if (gi) h += '<span class="sep"></span>';
+      grp.forEach(function (b) {
+        var inner, title;
+        if (b === 'pin') { inner = '<small>Fixer</small>'; title = 'Fixer / libérer un horaire généré'; }
+        else if (b === 'erase') { inner = '<small>Effacer</small>'; title = 'Vider la case'; }
+        else { inner = codeHtml(b); title = b + ' — ' + CODES[b]; }
+        h += '<button class="brush" data-brush="' + b + '" aria-pressed="' + (state.brush === b) + '" title="' + esc(title) + '">' + inner + '</button>';
+      });
+    });
+    h += '<span class="hint">Touchez une case pour y poser le code choisi.</span>';
+    el.innerHTML = h;
+  }
+
+  function codeHtml(c) {
+    if (c === 'X') return '<span class="code X">' + CROSS + '</span>';
+    if (c === 'V') return '<span class="code V">' + PALM + '</span>';
+    return '<span class="code ' + esc(c) + '">' + esc(c) + '</span>';
+  }
+
+  function render() {
+    $('monthTitle').textContent = MONTHS[state.m - 1] + ' ' + state.y;
+    $('undoBtn').disabled = !state.undo.length;
+    ['genBtn', 'clearBtn', 'undoBtn'].forEach(function (id) { $(id).hidden = !state.canWrite; });
+    renderPalette();
+    renderLegend();
+    if (!state.team || !state.plan) { $('gridwrap').innerHTML = '<div class="empty">Chargement du planning…</div>'; return; }
+    if (!staff().length) {
+      $('gridwrap').innerHTML = '<div class="empty">Aucune personne dans l’équipe pour l’instant. Ouvrez « Équipe &amp; règles » pour ajouter les infirmières, leur taux et leurs contraintes.</div>';
+      $('summary').innerHTML = ''; $('issues').innerHTML = '';
+      renderSettings(); return;
+    }
+    var ev = evaluation(), info = ev.info;
+    renderGrid(ev, info);
+    renderSummary(ev, info);
+    renderIssues(ev);
+    renderSettings();
+  }
+
+  function renderGrid(ev, info) {
+    var errCells = {};
+    ev.issues.forEach(function (it) { if (it.sid && it.lvl === 'err') errCells[it.sid + ':' + it.d] = 1; });
+    var colCls = info.days.map(function (d) { return d.hol ? 'hol' : d.we ? 'we' : ''; });
+    var h = '<table class="grid"><thead><tr class="wk"><th class="col-name"></th>';
+    info.days.forEach(function (d, i) { h += '<th class="' + colCls[i] + '">' + ((d.dow === 1 || i === 0) ? 'S' + isoWeek(state.y, state.m, d.d) : '') + '</th>'; });
+    h += '<th></th><th></th><th></th><th></th></tr><tr class="dn"><th class="col-name">Personne · taux</th>';
+    info.days.forEach(function (d, i) { h += '<th class="' + colCls[i] + '" title="' + (d.hol ? 'Jour férié' : '') + '">' + DOW2[d.dow] + '<span class="num">' + d.d + '</span></th>'; });
+    h += '<th class="sum">Jours</th><th class="sum">WE</th><th class="sum">Solde</th><th class="sum" title="Nombre de C1, M5, M1 et D2">C1 · M5 · M1 · D2</th></tr></thead><tbody>';
+    var groups = [['tertiaire', 'Tertiaires'], ['secondaire', 'Secondaires']];
+    var byId = {}; ev.people.forEach(function (p) { byId[p.id] = p; });
+    groups.forEach(function (g) {
+      var list = staff().filter(function (s) { return (s.groupe || 'tertiaire') === g[0]; });
+      if (!list.length) return;
+      h += '<tr class="group"><th class="col-name">' + g[1] + '</th><th colspan="' + (info.D + 4) + '"></th></tr>';
+      list.forEach(function (s) {
+        var cells = state.plan.cells[s.id] || {}, p = byId[s.id];
+        h += '<tr><th class="col-name"><span class="name" title="' + esc(displayName(s)) + '">' + esc(displayName(s)) + '</span><span class="meta">' + esc(s.taux) + ' %' + (s.role === 'admin' ? ' · admin' : '') + '</span></th>';
+        info.days.forEach(function (d, i) {
+          var pc = P.parseCell(cells[d.d]), inner;
+          if (pc.c) inner = codeHtml(pc.c);
+          else inner = s.role === 'admin' ? '' : '<span class="rest">·</span>';
+          var cls = 'cell' + (pc.l ? ' locked' : '') + (errCells[s.id + ':' + d.d] ? ' flag' : '');
+          h += '<td class="c ' + colCls[i] + '"><button class="' + cls + '" data-sid="' + esc(s.id) + '" data-d="' + d.d + '"' + (state.canWrite ? '' : ' disabled') + ' aria-label="' + esc(displayName(s)) + ', ' + d.d + ' : ' + esc(pc.c ? (pc.c + ' ' + (CODES[pc.c] || '')) : 'repos') + '">' + inner + '</button></td>';
+        });
+        var days = p.worked + p.credit;
+        h += '<td class="sum" title="Jours travaillés + vacances / jours dus">' + days + ' / ' + p.target + '</td><td class="sum">' + p.we + '</td><td class="sum"><span class="' + (p.balance < -0.01 ? 'neg' : p.balance > 0.01 ? 'pos' : '') + '">' + fmtH(p.balance) + '</span></td><td class="sum mix">' + (s.role === 'admin' ? '<span class="muted">—</span>' : P.SHIFTS.map(function (k) { return '<b class="k-' + k + '">' + (p.shifts[k] || 0) + '</b>'; }).join(' · ')) + '</td></tr>';
+      });
+    });
+    P.SHIFTS.forEach(function (s, si) {
+      h += '<tr class="cov' + (si === 0 ? ' first' : '') + '"><th class="col-name"><span class="meta">Couverture</span> ' + codeHtml(s) + '</th>';
+      info.days.forEach(function (d, i) {
+        var need = d.needs.indexOf(s) >= 0, n = ev.cover[i][s] || 0, v;
+        if (!need) v = n ? '<span class="dup">' + n + '</span>' : '<span class="na">—</span>';
+        else if (!n) v = '<span class="miss" title="' + s + ' manquant">!</span>';
+        else if (n === 2 && rules().fillHours && s === rules().renfort && !d.we && !d.hol) v = '<span class="okm" title="1 + renfort">✓+1</span>';
+        else if (n > 1) v = '<span class="dup" title="' + n + ' personnes">' + n + '</span>';
+        else v = '<span class="okm">✓</span>';
+        h += '<td class="' + colCls[i] + '">' + v + '</td>';
+      });
+      h += '<td></td><td></td><td></td><td></td></tr>';
+    });
+    h += '</tbody></table>';
+    var wrap = $('gridwrap'), sl = wrap.scrollLeft;
+    wrap.innerHTML = h; wrap.scrollLeft = sl;
+  }
+
+  function renderSummary(ev, info) {
+    var errs = ev.issues.filter(function (i) { return i.lvl === 'err'; }).length;
+    var warns = ev.issues.filter(function (i) { return i.lvl === 'warn'; }).length;
+    var h = '';
+    h += ev.missing ? '<span class="pill err">' + ev.missing + ' horaire(s) C1/M5/M1 manquant(s)</span>' : '<span class="pill ok">C1, M5, M1 couverts chaque jour</span>';
+    h += ev.missingD2 ? '<span class="pill warn">' + ev.missingD2 + ' D2 non placé(s)</span>' : '<span class="pill ok">D2 placés tous les jours de semaine</span>';
+    var other = errs - ev.missing;
+    if (other > 0) h += '<span class="pill err">' + other + ' règle(s) non respectée(s)</span>';
+    if (warns) h += '<span class="pill warn">' + warns + ' point(s) à surveiller</span>';
+    h += '<span class="pill">' + info.workingDays + ' jours ouvrables · 100 % = ' + fmtH(info.workingDays * rules().hpd).replace('+', '') + '</span>';
+    $('summary').innerHTML = h;
+  }
+
+  function renderIssues(ev) {
+    var names = {}; staff().forEach(function (s) { names[s.id] = displayName(s); });
+    if (!ev.issues.length) { $('issues').innerHTML = '<li class="muted">Rien à signaler pour ce mois.</li>'; return; }
+    $('issues').innerHTML = ev.issues.map(function (it) {
+      var d = new Date(state.y, state.m - 1, it.d);
+      return '<li class="' + it.lvl + '"><span class="tag">' + DOW2[d.getDay()] + ' ' + it.d + '</span><span>' + (it.sid ? '<strong>' + esc(names[it.sid] || '') + '</strong> — ' : '') + esc(it.txt) + '</span></li>';
+    }).join('');
+  }
+
+  function renderLegend() {
+    var el = $('legend'); if (el.dataset.done) return; el.dataset.done = 1;
+    el.innerHTML = Object.keys(CODES).map(function (c) { return '<div>' + codeHtml(c) + '<span>' + esc(CODES[c]) + '</span></div>'; }).join('') +
+      '<div><span class="rest" style="min-width:28px;text-align:center">·</span><span>Repos</span></div>';
+  }
+
+  /* ---------- équipe & règles ---------- */
+  function renderSettings() {
+    var el = $('settings');
+    el.hidden = !state.settingsOpen;
+    $('settingsBtn').setAttribute('aria-expanded', String(state.settingsOpen));
+    if (!state.settingsOpen || !state.team || !state.plan) return;
+    if (el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // ne pas perdre la saisie en cours
+    var ro = state.canWrite ? '' : ' disabled';
+    var r = rules(), info = P.monthInfo(state.y, state.m, state.plan.holidays);
+    var hh = Math.floor(r.hpd), mm = Math.round((r.hpd - hh) * 60);
+    var h = '<h3>Équipe</h3><div class="staff-list"><div class="staff-row staff-head"><span>Prénom</span><span>Nom</span><span>Taux %</span><span>Groupe</span><span>Rôle</span><span>Jours exclus</span><span>Tutorat</span><span>Week-ends</span><span>Max suite</span><span></span></div>';
+    staff().forEach(function (s, i) {
+      var ex = s.joursInterdits || [];
+      h += '<div class="staff-row" data-i="' + i + '">' +
+        '<label data-lbl="Prénom"><input type="text" id="st-' + esc(s.id) + '-prenom" data-f="prenom" value="' + esc(s.prenom) + '"' + ro + '></label>' +
+        '<label data-lbl="Nom"><input type="text" id="st-' + esc(s.id) + '-nom" data-f="nom" value="' + esc(s.nom) + '"' + ro + '></label>' +
+        '<label data-lbl="Taux %"><input type="number" id="st-' + esc(s.id) + '-taux" data-f="taux" min="10" max="100" step="5" value="' + esc(s.taux) + '"' + ro + '></label>' +
+        '<label data-lbl="Groupe"><select id="st-' + esc(s.id) + '-groupe" data-f="groupe"' + ro + '><option value="tertiaire"' + (s.groupe !== 'secondaire' ? ' selected' : '') + '>Tertiaire</option><option value="secondaire"' + (s.groupe === 'secondaire' ? ' selected' : '') + '>Secondaire</option></select></label>' +
+        '<label data-lbl="Rôle"><select id="st-' + esc(s.id) + '-role" data-f="role"' + ro + '><option value="soins"' + (s.role !== 'admin' ? ' selected' : '') + '>Soins</option><option value="admin"' + (s.role === 'admin' ? ' selected' : '') + '>Administratif (CS)</option></select></label>' +
+        '<div data-lbl="Jours exclus" class="days7-w"><div class="days7">' + [1, 2, 3, 4, 5, 6, 0].map(function (w) { return '<button type="button" data-w="' + w + '" aria-pressed="' + (ex.indexOf(w) >= 0) + '" title="Ne travaille pas le ' + ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][w] + '"' + ro + '>' + DOW1[w] + '</button>'; }).join('') + '</div></div>' +
+        '<label class="chk" data-lbl="Tutorat"><input type="checkbox" id="st-' + esc(s.id) + '-tut" data-f="tutorat"' + (s.tutorat ? ' checked' : '') + ro + '> T</label>' +
+        '<label data-lbl="Week-ends"><input type="text" id="st-' + esc(s.id) + '-we" data-f="weekends" placeholder="auto" value="' + esc(s.weekends == null ? '' : s.weekends) + '"' + ro + '></label>' +
+        '<label data-lbl="Max de suite"><input type="number" id="st-' + esc(s.id) + '-ms" data-f="maxSuite" min="1" max="7" placeholder="' + r.maxConsecutive + '" value="' + esc(s.maxSuite || '') + '"' + ro + '></label>' +
+        (state.canWrite ? '<button class="iconbtn" data-del="' + i + '" aria-label="Retirer ' + esc(displayName(s)) + '" title="Retirer">×</button>' : '<span></span>') +
+        '</div>';
+    });
+    h += '</div>';
+    if (state.canWrite) h += '<div><button class="btn" id="addStaff">Ajouter une personne</button></div>';
+    h += '<p class="note">« Max suite » : nombre maximal de jours de travail d’affilée pour cette personne (vide = règle générale). « Week-ends » vide = automatique (90–80 % : 2, 70–60 % : 1 à 2, 50 % : 1, ajusté au nombre de week-ends du mois). Rôle « Administratif » : la personne reçoit des CS en semaine et ne compte pas dans les 4 horaires.</p>';
+    h += '<h3>Règles</h3><div class="rules">' +
+      '<label>Heures par jour<input type="text" id="r-hpd" value="' + hh + ':' + String(mm).padStart(2, '0') + '"' + ro + '></label>' +
+      '<label>Jours de suite au maximum (règle générale)<input type="number" id="r-max" min="3" max="7" value="' + r.maxConsecutive + '"' + ro + '></label>' +
+      '<label>Tutorats (T) max par mois<input type="number" id="r-tut" min="0" max="10" value="' + r.tutoratMax + '"' + ro + '></label>' +
+      '<label>Compléter les heures<select id="r-fill"' + ro + '><option value="1"' + (r.fillHours ? ' selected' : '') + '>Oui, avec un renfort en semaine</option><option value="0"' + (r.fillHours ? '' : ' selected') + '>Non, 4 horaires seulement</option></select></label>' +
+      '<label>Horaire de renfort<select id="r-renfort"' + ro + '>' + ['D2', 'M1', 'M5'].map(function (c) { return '<option' + (r.renfort === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
+      '<p class="note">Avec seulement 4 horaires par jour, le mois demande moins de journées que ce que l’équipe doit selon les taux. « Compléter les heures » ajoute, certains jours de semaine, une 5<sup>e</sup> personne en renfort (au plus une par jour) pour amener chacune à son temps dû. Les tutorats remplacent alors un renfort. Les vacances saisies réduisent automatiquement le nombre de renforts.</p>';
+    h += '<h3>Jours fériés — ' + MONTHS[state.m - 1] + ' ' + state.y + '</h3><p class="note">Un jour férié se planifie comme un week-end (C1, M5, M1, sans D2) et réduit le temps dû. Préremplis pour le canton du Jura.</p><div class="hol-days">';
+    info.days.forEach(function (d) { h += '<button type="button" data-hol="' + d.d + '" class="' + (d.we ? 'we' : '') + '" aria-pressed="' + d.hol + '"' + ro + '>' + d.d + '</button>'; });
+    h += '</div>';
+    h += '<h3>Sauvegarde</h3><p class="note">Exportez l’équipe et les plannings dans un fichier, pour les garder ou les reprendre dans une autre copie de l’application.</p><div class="toolbar"><button class="btn" id="exportJson">Exporter les données (JSON)</button>' +
+      (state.canWrite ? '<label class="btn" for="importFile">Importer une sauvegarde…</label><input type="file" id="importFile" accept=".json,application/json" hidden>' : '') + '</div>';
+    el.innerHTML = h;
+  }
+
+  function staffEdit(i, f, v) {
+    var s = state.team.staff[i]; if (!s) return;
+    if (f === 'taux') v = Math.max(0, Math.min(100, +v || 0));
+    if (f === 'weekends') v = v === '' ? null : (isNaN(+v) ? null : +v);
+    if (f === 'maxSuite') v = +v > 0 ? Math.min(7, Math.round(+v)) : null;
+    s[f] = v; save('team'); render();
+  }
+
+  /* ---------- événements ---------- */
+  $('gridwrap').addEventListener('click', function (e) { var b = e.target.closest('.cell'); if (b && !b.disabled) paint(b.dataset.sid, b.dataset.d); });
+  $('palette').addEventListener('click', function (e) { var b = e.target.closest('.brush'); if (!b) return; state.brush = b.dataset.brush; renderPalette(); });
+  $('genBtn').onclick = generate;
+  $('undoBtn').onclick = undo;
+  $('clearBtn').onclick = clearGenerated;
+  $('exportBtn').onclick = function () { if (state.plan && staff().length) exportCsv(); };
+  $('copyCsv').onclick = function () {
+    var t = $('csvText');
+    try { navigator.clipboard.writeText(t.value).then(function () { toast('Copié'); }, function () { t.select(); }); } catch (e) { t.select(); }
+  };
+  $('closeCsv').onclick = function () { $('exportPanel').hidden = true; };
+  $('settingsBtn').onclick = function () { state.settingsOpen = !state.settingsOpen; renderSettings(); if (state.settingsOpen) $('settings').scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+  $('prev').onclick = function () { state.m--; if (state.m < 1) { state.m = 12; state.y--; } subscribePlan(); };
+  $('next').onclick = function () { state.m++; if (state.m > 12) { state.m = 1; state.y++; } subscribePlan(); };
+
+  var st = $('settings');
+  st.addEventListener('change', function (e) {
+    var t = e.target, row = t.closest('.staff-row');
+    if (row && t.dataset.f) { staffEdit(+row.dataset.i, t.dataset.f, t.type === 'checkbox' ? t.checked : t.value); return; }
+    if (t.id === 'r-hpd') { var m = /^(\d{1,2})(?:[:h](\d{1,2}))?$/.exec(t.value.trim()); if (m) { state.team.rules = state.team.rules || {}; state.team.rules.hpd = +m[1] + (+(m[2] || 0)) / 60; save('team'); render(); } else toast('Format attendu : 8:25'); }
+    if (t.id === 'r-max') { state.team.rules = state.team.rules || {}; state.team.rules.maxConsecutive = Math.max(3, Math.min(7, +t.value || 5)); save('team'); render(); }
+    if (t.id === 'importFile' && t.files && t.files[0]) { importJson(t.files[0]); t.value = ''; return; }
+    if (t.id === 'r-fill') { state.team.rules = state.team.rules || {}; state.team.rules.fillHours = t.value === '1'; save('team'); render(); }
+    if (t.id === 'r-renfort') { state.team.rules = state.team.rules || {}; state.team.rules.renfort = t.value; save('team'); render(); }
+    if (t.id === 'r-tut') { state.team.rules = state.team.rules || {}; state.team.rules.tutoratMax = Math.max(0, +t.value || 0); save('team'); render(); }
+  });
+  st.addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.id === 'exportJson') { exportJson(); return; }
+    if (!state.canWrite) return;
+    if (t.dataset.w !== undefined) {
+      var row = t.closest('.staff-row'), s = state.team.staff[+row.dataset.i], w = +t.dataset.w, ex = (s.joursInterdits || []).slice(), k = ex.indexOf(w);
+      if (k >= 0) ex.splice(k, 1); else ex.push(w);
+      s.joursInterdits = ex; save('team'); render();
+    } else if (t.dataset.hol) {
+      var d = +t.dataset.hol, hs = (state.plan.holidays || []).slice(), j = hs.indexOf(d);
+      pushUndo();
+      if (j >= 0) hs.splice(j, 1); else hs.push(d);
+      state.plan.holidays = hs.sort(function (a, b) { return a - b; }); save('plan'); render();
+    } else if (t.dataset.del !== undefined) {
+      var i = +t.dataset.del, s2 = state.team.staff[i], z = $('confirmZone');
+      z.innerHTML = '<div class="confirm"><span>Retirer ' + esc(displayName(s2)) + ' de l’équipe ?</span><button class="btn" id="cYes">Retirer</button><button class="btn" id="cNo">Garder</button></div>';
+      z.scrollIntoView({ block: 'nearest' });
+      $('cNo').onclick = function () { z.innerHTML = ''; };
+      $('cYes').onclick = function () { z.innerHTML = ''; state.team.staff.splice(state.team.staff.indexOf(s2), 1); save('team'); render(); };
+    } else if (t.id === 'addStaff') {
+      state.team.staff.push({ id: 'p' + Date.now().toString(36), prenom: '', nom: 'Nouvelle personne', groupe: 'tertiaire', taux: 80, role: 'soins', joursInterdits: [], tutorat: false, weekends: null });
+      save('team'); render();
+    }
+  });
+
+  boot();
+})();
+</script>
+
+</body>
+</html>
