@@ -165,7 +165,7 @@
     var extraSlots = fill ? Math.max(0, capSum - freeNeed) : 0;
     shareOf[RF] += extraSlots; totalNeedSlots += extraSlots;
     SHIFTS.forEach(function (s) { shareOf[s] /= Math.max(1, totalNeedSlots); });
-    var EQW = { C1: 100, M5: 100, M1: 100, D2: 100 };
+    var EQW = { C1: 180, M5: 120, M1: 120, D2: 180 };
 
     var best = null, bestScore = Infinity;
     var restarts = rules.restarts || 8, iters = rules.iterations || 30000;
@@ -210,7 +210,7 @@
       for (var c = 0; c < cands.length && have < tMax && worked < a.maxDays; c++) {
         var i2 = cands[c].i;
         if (picked.some(function (q) { return Math.abs(q - i2) < 5; })) continue;
-        if (shiftInRun(row, i2, 'C1') && row.slice(i2 + 1).findIndex(function(c){return !isWork(c);}) !== 0) { var trial = row.slice(); trial[i2] = 'T'; var seen = 0, invalid = false; trial.forEach(function(c){ if (!isWork(c)) seen = 0; else if(c === 'C1' && ++seen > 1) invalid = true; }); if(invalid) continue; }
+        var trial = row.slice(); trial[i2] = 'T'; var seen = {}, invalid = false; trial.forEach(function(c){ if (!isWork(c)) seen = {}; else if(c === 'C1' || c === 'D2') { if(seen[c]) invalid = true; seen[c] = true; } }); if(invalid) continue;
         row[i2] = 'T'; picked.push(i2); have++; worked++;
       }
     });
@@ -298,7 +298,7 @@
           if (i < D) {
             if (w) {
               worked++;
-              if (row[i] === 'D2') { if (d2run) sc += 4000; d2run = true; }
+              if (row[i] === 'D2') { if (d2run) sc += 100000; d2run = true; }
               if (row[i] === 'C1') { if (c1run) sc += 100000; c1run = true; }
             } else { d2run = false; c1run = false; }
             if (cnt4[row[i]] !== undefined) { cnt4[row[i]]++; shiftDays++; }
@@ -328,6 +328,15 @@
             segStart = i;
           }
         }
+        // Répartir les horaires fatigants dans toute fenêtre glissante de sept jours.
+        ['C1', 'D2'].forEach(function (sh) {
+          for (var start = 0; start < D; start++) {
+            if (row[start] !== sh) continue;
+            for (var end = start + 1; end < Math.min(D, start + 7); end++) {
+              if (row[end] === sh) sc += [0, 100000, 1800, 1000, 600, 300, 120][end - start];
+            }
+          }
+        });
         var dev = worked - a.exp;
         sc += (fill && dev < 0 ? 110 : 40) * dev * dev;
         if (worked > a.maxDays) sc += 200 * (worked - a.maxDays);
@@ -450,6 +459,7 @@
         } else { run = 0; d2seen = false; c1seen = false; }
         if (c === 'C1') { c1++; if (badC1(days, a.row, i)) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'C1 suivi d’un horaire du matin' }); }
       }
+      ['C1', 'D2'].forEach(function(sh) { for(var i=0;i<D;i++) { if(a.row[i]!==sh) continue; var count=a.row.slice(Math.max(0,i-6),i+1).filter(function(c){return c===sh;}).length; if(count>=3) issues.push({lvl:'warn',d:i+1,sid:a.s.id,txt:count+' '+sh+' sur 7 jours'}); } });
       info.blocks.forEach(function (b) { var n = b.filter(function (i) { return isWork(a.row[i]); }).length; if (n) we++; if (b.length === 2 && n === 1) issues.push({ lvl: 'err', d: b[0] + 1, sid: a.s.id, txt: 'Week-end incomplet : samedi et dimanche indissociables' }); });
       var dueH = (a.s.taux || 0) / 100 * info.workingDays * hpd;
       var doneH = (worked + a.credit) * hpd;
