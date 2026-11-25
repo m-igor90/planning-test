@@ -102,7 +102,7 @@
       var forbid = {};
       (s.joursInterdits || []).forEach(function (w) { forbid[w] = 1; });
       return { s: s, row: row, lock: lock, credit: credit, target: targetDays(s, info), forbid: forbid,
-        maxRun: (s.id === 'r' || /^rachel$/i.test(s.prenom || '')) ? Math.min(3, +s.maxSuite > 0 ? +s.maxSuite : 3) : (+s.maxSuite > 0 ? +s.maxSuite : 0) };
+        maxRun: Math.min((s.id === 'r' || /^rachel$/i.test(s.prenom || '') || +s.taux < 90) ? 3 : 4, +s.maxSuite > 0 ? +s.maxSuite : 4) };
     });
   }
 
@@ -151,7 +151,7 @@
       capSum += a.cap;
     });
     var f = fill ? 1 : capSum > 0 ? Math.min(1, freeNeed / capSum) : 0;
-    P.forEach(function (a) { a.exp = a.lockedWork + a.cap * f; a.maxDays = a.target - a.credit; a.maxRun = a.maxRun || maxC; });
+    P.forEach(function (a) { a.exp = a.lockedWork + a.cap * f; a.maxDays = a.target - a.credit; a.maxRun = Math.min(a.maxRun || maxC, maxC); });
 
     // Week-ends souhaités
     var S = blocks.length * 3, fixedSum = 0, autoSum = 0;
@@ -252,7 +252,7 @@
             var a = P[p], run = runBefore(g[p], i);
             if (s === 'D2' && assigned[p] >= a.exp) continue;
             var sc = (a.exp - assigned[p]) / Math.max(1, a.exp) * 10 + rnd() * 2;
-            if (run >= a.maxRun) sc -= 50;
+            if (run >= a.maxRun) continue;
             if (assigned[p] >= a.maxDays) sc -= 30;
             if (run === 1 || run === 2) sc += 1.2; else if (run >= 3) sc -= 1.5 * (run - 2);
             if (run === 0 && i > 0 && runBefore(g[p], i - 1) === 0 && i > 1 && isWork(g[p][i - 2])) sc -= 0.5;
@@ -311,10 +311,10 @@
           if (i === D || (i > 0 && w !== prevW)) {
             var len = i - segStart, edge = segStart === 0 || i === D;
             if (i > 0 && prevW) {
-              if (len > mr) sc += (a.s.id === 'r' || /^rachel$/i.test(a.s.prenom || '') ? 100000 : 3000) * (len - mr);
-              else if (len === 1 && !edge && !isolatedOK) sc += 350;
+              if (len > mr) sc += 200000 * (len - mr);
+              else if (len === 1 && !edge && !isolatedOK) sc += row[segStart] === 'D2' ? 350 : 650;
               else if (len === 3) sc += 0;
-              else if (len === 4) sc += 100;
+              else if (len === 4) sc += 1800;
               else if (len === 5) sc += 400;
               else if (len >= 6) sc += 250;
               if (restLen === 1 && prevLen >= 0) {
@@ -459,8 +459,8 @@
           shifts[c] = (shifts[c] || 0) + 1;
           if (c === 'D2') { if (d2seen) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: '2 D2 (coupés) dans la même série' }); d2seen = true; }
           if (c === 'C1') { if (c1seen) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: '2 C1 dans la même série' }); c1seen = true; }
-          var mr = a.maxRun || maxC;
-          if (run === mr + 1) issues.push({ lvl: 'warn', d: i + 1, sid: a.s.id, txt: 'plus de ' + mr + ' jours de suite' });
+          var mr = Math.min(a.maxRun || maxC, maxC);
+          if (run === mr + 1) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'plus de ' + mr + ' jours de suite' });
           if (a.forbid[days[i].dow]) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'travaille un jour exclu' });
         } else { run = 0; d2seen = false; c1seen = false; }
         if (c === 'C1') { c1++; if (badC1(days, a.row, i)) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'C1 suivi d’un horaire du matin' }); }
