@@ -28,6 +28,7 @@ l'équipe dans « Équipe & règles ».
 - Option « Compléter les heures » : un renfort en semaine (au plus un par jour) pour que chacune atteigne son temps dû.
 - Jamais un horaire du matin après un C1 en semaine. Le week-end, rotation des horaires (M1→M5, M5→C1, C1→M1),
   jamais deux C1 le même week-end.
+- Jamais deux D2 (horaires coupés) dans la même série de jours travaillés, même courte.
 - Séries régulières de 2 à 3 jours, pas de jour isolé ni de « 5 jours – 1 congé – 5 jours » ;
   maximum de jours de suite par personne.
 - Répartition équitable des C1, M5, M1 et D2, des week-ends (selon le taux, en alternance) et des jours de travail.

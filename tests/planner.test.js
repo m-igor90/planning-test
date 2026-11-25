@@ -25,6 +25,13 @@ test('janvier 2027 : couverture complète et règles dures respectées', () => {
   for (let d = 1; d <= 31; d++) {
     if (new Date(2027, 0, d).getDay() === 3) assert.ok(!P.isWork(P.parseCell(res.cells.b[d]).c), 'B ne travaille pas le mercredi');
   }
+  for (const id of Object.keys(res.cells)) {
+    let d2 = 0;
+    for (let d = 1; d <= 31; d++) {
+      const c = P.parseCell(res.cells[id][d]).c;
+      if (!P.isWork(c)) d2 = 0; else if (c === 'D2') { d2++; assert.ok(d2 <= 1, id + ' : deux D2 dans la même série'); }
+    }
+  }
   let run = 0;
   for (let d = 1; d <= 31; d++) { run = P.isWork(P.parseCell(res.cells.i[d]).c) ? run + 1 : 0; assert.ok(run <= 3, 'I : 3 jours de suite au maximum'); }
 });

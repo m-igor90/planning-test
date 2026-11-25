@@ -225,7 +225,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     <section class="panel">
       <h3>Codes et règles appliquées</h3>
       <div class="legend" id="legend"></div>
-      <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune, répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (par ex. jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
+      <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Jamais deux D2 (horaires coupés) dans la même série de jours travaillés. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune, répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (par ex. jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
     </section>
   </div>
 </div>
@@ -240,7 +240,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   var DOW2 = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
   var DOW1 = ['D','L','M','M','J','V','S'];
   var CODES = {
-    C1: 'Soir', M5: 'Matin', M1: 'Matin', D2: 'Jour (semaine)',
+    C1: 'Soir', M5: 'Matin', M1: 'Matin', D2: 'Coupé (semaine)',
     CS: 'Journée administrative', T: 'Tutorat', R: 'Réunion', F: 'Formation', N: 'Nuit',
     V: 'Vacances', X: 'Désir de congé'
   };

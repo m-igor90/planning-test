@@ -54,6 +54,13 @@
     var a = days[i], b = days[i + 1];
     return !!(a && b && (a.we || a.hol) && (b.we || b.hol));
   }
+  /* Un D2 (horaire coupé) au plus par série de jours travaillés d'affilée. */
+  function d2InRun(row, i) {
+    var k;
+    for (k = i - 1; k >= 0 && isWork(row[k]); k--) if (row[k] === 'D2') return true;
+    for (k = i + 1; k < row.length && isWork(row[k]); k++) if (row[k] === 'D2') return true;
+    return false;
+  }
   function badC1(days, row, i) { // C1 le jour i puis horaire du matin le jour i+1, hors week-end
     return row[i] === 'C1' && i + 1 < row.length && isEarly(row[i + 1]) && !lightPair(days, i);
   }
@@ -223,6 +230,7 @@
       if (a.forbid[days[i].dow]) return false;
       if (isEarly(s) && i > 0 && g[p][i - 1] === 'C1' && !lightPair(days, i - 1)) return false;
       if (s === 'C1' && i + 1 < D && isEarly(g[p][i + 1]) && !lightPair(days, i)) return false;
+      if (s === 'D2' && d2InRun(g[p], i)) return false;
       return true;
     }
     function construct(g, rnd) {
@@ -281,11 +289,14 @@
       }
       for (p = 0; p < N; p++) {
         var row = g[p], a = P[p], worked = 0, we = 0, prevBlock = false, cnt4 = { C1: 0, M5: 0, M1: 0, D2: 0 }, shiftDays = 0;
-        var mr = a.maxRun, prevLen = -1, restLen = -1, segStart = 0;
+        var mr = a.maxRun, prevLen = -1, restLen = -1, segStart = 0, d2run = false;
         for (i = 0; i <= D; i++) {
           var w = i < D && isWork(row[i]);
           if (i < D) {
-            if (w) worked++;
+            if (w) {
+              worked++;
+              if (row[i] === 'D2') { if (d2run) sc += 4000; d2run = true; }
+            } else d2run = false;
             if (cnt4[row[i]] !== undefined) { cnt4[row[i]]++; shiftDays++; }
             if (badC1(days, row, i)) sc += 5000;
             else if (row[i] === 'C1' && i + 1 < D && isEarly(row[i + 1])) sc += 10;
@@ -420,17 +431,18 @@
     var issues = [];
     var cover = days.map(function () { return {}; });
     var people = all.map(function (a) {
-      var worked = 0, c1 = 0, run = 0, we = 0, shifts = {};
+      var worked = 0, c1 = 0, run = 0, we = 0, shifts = {}, d2seen = false;
       for (var i = 0; i < D; i++) {
         var c = a.row[i];
         if (c) cover[i][c] = (cover[i][c] || 0) + 1;
         if (isWork(c)) {
           worked++; run++;
           shifts[c] = (shifts[c] || 0) + 1;
+          if (c === 'D2') { if (d2seen) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: '2 D2 (coupés) dans la même série' }); d2seen = true; }
           var mr = a.maxRun || maxC;
           if (run === mr + 1) issues.push({ lvl: 'warn', d: i + 1, sid: a.s.id, txt: 'plus de ' + mr + ' jours de suite' });
           if (a.forbid[days[i].dow]) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'travaille un jour exclu' });
-        } else run = 0;
+        } else { run = 0; d2seen = false; }
         if (c === 'C1') { c1++; if (badC1(days, a.row, i)) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'C1 suivi d’un horaire du matin' }); }
       }
       info.blocks.forEach(function (b) { if (b.some(function (i) { return isWork(a.row[i]); })) we++; });
