@@ -292,6 +292,7 @@
       }
       for (p = 0; p < N; p++) {
         var row = g[p], a = P[p], worked = 0, we = 0, prevBlock = false, cnt4 = { C1: 0, M5: 0, M1: 0, D2: 0 }, shiftDays = 0;
+        var isolatedOK = a.s.id === 'r' || /^ra(chel)?$/i.test(a.s.prenom || '');
         var mr = a.maxRun, prevLen = -1, restLen = -1, segStart = 0, d2run = false, c1run = false;
         for (i = 0; i <= D; i++) {
           var w = i < D && isWork(row[i]);
@@ -311,14 +312,14 @@
             var len = i - segStart, edge = segStart === 0 || i === D;
             if (i > 0 && prevW) {
               if (len > mr) sc += 3000 * (len - mr);
-              else if (len === 1 && !edge) sc += 70;
-              else if (len === 3) sc += mr <= 3 ? 25 : 4;
-              else if (len === 4) sc += 40;
-              else if (len === 5) sc += 120;
+              else if (len === 1 && !edge && !isolatedOK) sc += 350;
+              else if (len === 3) sc += 0;
+              else if (len === 4) sc += 100;
+              else if (len === 5) sc += 400;
               else if (len >= 6) sc += 250;
               if (restLen === 1 && prevLen >= 0) {
                 var around = prevLen + len;
-                sc += around >= 7 ? 140 : around >= 6 ? 70 : around >= 5 ? 30 : 10;
+                sc += (prevLen >= 4 || len >= 4) ? 100000 : (around >= 6 ? 450 : around >= 4 ? 180 : isolatedOK ? 0 : 120);
               }
               prevLen = len;
             } else if (i > 0) {
@@ -337,6 +338,11 @@
             }
           }
         });
+        // Éviter les longues périodes fragmentées par des repos isolés.
+        for (var start = 0; start + 6 < D; start++) {
+          var windowWork = row.slice(start, start + 7).filter(isWork).length;
+          if (windowWork >= 6) sc += 600 * (windowWork - 5);
+        }
         var dev = worked - a.exp;
         sc += (fill && dev < 0 ? 110 : 40) * dev * dev;
         if (worked > a.maxDays) sc += 200 * (worked - a.maxDays);
