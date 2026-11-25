@@ -285,7 +285,7 @@
           s = needs[n];
           var cnt = adminCover[i][s] || 0;
           for (p = 0; p < N; p++) if (g[p][i] === s) cnt++;
-          if (!cnt) sc += s === 'D2' ? 400 : 10000;
+          if (!cnt) sc += s === 'D2' ? 1800 : 10000;
           else if (cnt > 1) sc += (fill && s === RF && !days[i].we && !days[i].hol) ? 5 + 300 * (cnt - 2) : 300 * (cnt - 1);
         }
         if (days[i].we || days[i].hol) for (p = 0; p < N; p++) if (g[p][i] === 'D2' && !P[p].lock[i]) sc += 300;
