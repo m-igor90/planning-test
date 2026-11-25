@@ -6,7 +6,7 @@
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
-<title>Planning Soins Domaine</title>
+<title>Planning infirmier</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
@@ -181,7 +181,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow">LJD · Soins Domaine · Delémont</span>
+      <span class="eyebrow">Démo · Service de soins</span>
       <h1>Planning infirmier</h1>
     </div>
     <div class="month">
@@ -265,7 +265,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   function displayName(s) { return ((s.prenom || '') + ' ' + (s.nom || '')).trim() || 'Sans nom'; }
   function rules() { var r = (state.team && state.team.rules) || {}; return { hpd: r.hpd || (8 + 25 / 60), maxConsecutive: r.maxConsecutive || 5, tutoratMax: r.tutoratMax === undefined ? 2 : r.tutoratMax, fillHours: r.fillHours !== false, renfort: r.renfort || 'D2' }; }
   function staff() { return (state.team && state.team.staff) || []; }
-  function defaultPlan() { return { year: state.y, month: state.m, holidays: P.holidaysJura(state.y, state.m), cells: {} }; }
+  function defaultPlan() { return { year: state.y, month: state.m, holidays: P.holidaysDefault(state.y, state.m), cells: {} }; }
   function isoWeek(y, m, d) { var dt = new Date(Date.UTC(y, m - 1, d)); var day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day); var y0 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1)); return Math.ceil(((dt - y0) / 86400000 + 1) / 7); }
 
   function setStatus(kind, txt) { var el = $('status'); el.className = 'status ' + kind; $('statusTxt').textContent = txt; }
@@ -315,7 +315,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
       if (k !== key() || busy(path)) return;
       state.plan = snap.exists ? clone(snap.data()) : defaultPlan();
       if (!state.plan.cells) state.plan.cells = {};
-      if (!state.plan.holidays) state.plan.holidays = P.holidaysJura(state.y, state.m);
+      if (!state.plan.holidays) state.plan.holidays = P.holidaysDefault(state.y, state.m);
       render();
     }, function () { setStatus('off', 'Planning injoignable'); });
     render();
@@ -623,7 +623,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
       '<label>Compléter les heures<select id="r-fill"' + ro + '><option value="1"' + (r.fillHours ? ' selected' : '') + '>Oui, avec un renfort en semaine</option><option value="0"' + (r.fillHours ? '' : ' selected') + '>Non, 4 horaires seulement</option></select></label>' +
       '<label>Horaire de renfort<select id="r-renfort"' + ro + '>' + ['D2', 'M1', 'M5'].map(function (c) { return '<option' + (r.renfort === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
       '<p class="note">Avec seulement 4 horaires par jour, le mois demande moins de journées que ce que l’équipe doit selon les taux. « Compléter les heures » ajoute, certains jours de semaine, une 5<sup>e</sup> personne en renfort (au plus une par jour) pour amener chacune à son temps dû. Les tutorats remplacent alors un renfort. Les vacances saisies réduisent automatiquement le nombre de renforts.</p>';
-    h += '<h3>Jours fériés — ' + MONTHS[state.m - 1] + ' ' + state.y + '</h3><p class="note">Un jour férié se planifie comme un week-end (C1, M5, M1, sans D2) et réduit le temps dû. Préremplis pour le canton du Jura.</p><div class="hol-days">';
+    h += '<h3>Jours fériés — ' + MONTHS[state.m - 1] + ' ' + state.y + '</h3><p class="note">Un jour férié se planifie comme un week-end (C1, M5, M1, sans D2) et réduit le temps dû.</p><div class="hol-days">';
     info.days.forEach(function (d) { h += '<button type="button" data-hol="' + d.d + '" class="' + (d.we ? 'we' : '') + '" aria-pressed="' + d.hol + '"' + ro + '>' + d.d + '</button>'; });
     h += '</div>';
     h += '<h3>Sauvegarde</h3><p class="note">Exportez l’équipe et les plannings dans un fichier, pour les garder ou les reprendre dans une autre copie de l’application.</p><div class="toolbar"><button class="btn" id="exportJson">Exporter les données (JSON)</button>' +

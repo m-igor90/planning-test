@@ -1,4 +1,4 @@
-/* Moteur de planification — Soins Domaine.
+/* Moteur de planification — planning infirmier.
    Utilisable dans la page (window.Planner) et dans Node (module.exports). */
 (function (root) {
   'use strict';
@@ -20,8 +20,8 @@
     return new Date(y, month - 1, day);
   }
 
-  /* Jours fériés du canton du Jura (modifiables dans l'application). */
-  function holidaysJura(y, m) {
+  /* Jours fériés par défaut (modifiables dans l'application). */
+  function holidaysDefault(y, m) {
     var e = easter(y), list = [];
     var add = function (date) { if (date.getMonth() + 1 === m) list.push(date.getDate()); };
     var rel = function (n) { var d = new Date(e); d.setDate(d.getDate() + n); return d; };
@@ -452,7 +452,7 @@
     return { info: info, people: people, cover: cover, issues: issues, missing: missing, missingD2: missingD2 };
   }
 
-  var api = { SHIFTS: SHIFTS, isWork: isWork, isEarly: isEarly, monthInfo: monthInfo, holidaysJura: holidaysJura,
+  var api = { SHIFTS: SHIFTS, isWork: isWork, isEarly: isEarly, monthInfo: monthInfo, holidaysDefault: holidaysDefault,
     parseCell: parseCell, generate: generate, evaluate: evaluate, targetDays: targetDays };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Planner = api;

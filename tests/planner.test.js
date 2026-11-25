@@ -13,7 +13,7 @@ const staff = [
 const rules = { maxConsecutive: 5, tutoratMax: 2, fillHours: true, renfort: 'D2', restarts: 2, iterations: 12000 };
 
 test('janvier 2027 : couverture complète et règles dures respectées', () => {
-  const holidays = P.holidaysJura(2027, 1);
+  const holidays = P.holidaysDefault(2027, 1);
   assert.deepStrictEqual(holidays, [1, 2]);
   const cells = { a: { 5: '!X', 6: '!X' }, c: { 12: '!V', 13: '!V' } };
   const res = P.generate({ staff, rules, year: 2027, month: 1, holidays, cells, seed: 1 });

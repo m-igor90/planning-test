@@ -1,6 +1,6 @@
-# Planning Soins Domaine
+# Planning infirmier
 
-Application web de planification mensuelle pour l'équipe infirmière (LJD · Soins Domaine, Delémont).
+Application web de démonstration pour planifier le mois d'une équipe infirmière.
 Une seule page (`index.html`) et le moteur de génération (`planner.js`), sans installation ni serveur.
 
 ## Utilisation
@@ -32,7 +32,7 @@ l'équipe dans « Équipe & règles ».
   maximum de jours de suite par personne.
 - Répartition équitable des C1, M5, M1 et D2, des week-ends (selon le taux, en alternance) et des jours de travail.
 - Jours exclus respectés (par exemple : jamais le mercredi). Vacances comptées comme jours dus.
-- Jours fériés préremplis pour le canton du Jura, modifiables.
+- Jours fériés préremplis, modifiables mois par mois.
 
 ## Tests
 
