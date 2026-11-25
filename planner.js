@@ -55,10 +55,10 @@
     return !!(a && b && (a.we || a.hol) && (b.we || b.hol));
   }
   /* Un D2 (horaire coupé) au plus par série de jours travaillés d'affilée. */
-  function d2InRun(row, i) {
+  function shiftInRun(row, i, shift) {
     var k;
-    for (k = i - 1; k >= 0 && isWork(row[k]); k--) if (row[k] === 'D2') return true;
-    for (k = i + 1; k < row.length && isWork(row[k]); k++) if (row[k] === 'D2') return true;
+    for (k = i - 1; k >= 0 && isWork(row[k]); k--) if (row[k] === shift) return true;
+    for (k = i + 1; k < row.length && isWork(row[k]); k++) if (row[k] === shift) return true;
     return false;
   }
   function badC1(days, row, i) { // C1 le jour i puis horaire du matin le jour i+1, hors week-end
@@ -165,7 +165,7 @@
     var extraSlots = fill ? Math.max(0, capSum - freeNeed) : 0;
     shareOf[RF] += extraSlots; totalNeedSlots += extraSlots;
     SHIFTS.forEach(function (s) { shareOf[s] /= Math.max(1, totalNeedSlots); });
-    var EQW = { C1: 30, M5: 14, M1: 14, D2: 14 };
+    var EQW = { C1: 100, M5: 100, M1: 100, D2: 100 };
 
     var best = null, bestScore = Infinity;
     var restarts = rules.restarts || 8, iters = rules.iterations || 30000;
@@ -210,6 +210,7 @@
       for (var c = 0; c < cands.length && have < tMax && worked < a.maxDays; c++) {
         var i2 = cands[c].i;
         if (picked.some(function (q) { return Math.abs(q - i2) < 5; })) continue;
+        if (shiftInRun(row, i2, 'C1') && row.slice(i2 + 1).findIndex(function(c){return !isWork(c);}) !== 0) { var trial = row.slice(); trial[i2] = 'T'; var seen = 0, invalid = false; trial.forEach(function(c){ if (!isWork(c)) seen = 0; else if(c === 'C1' && ++seen > 1) invalid = true; }); if(invalid) continue; }
         row[i2] = 'T'; picked.push(i2); have++; worked++;
       }
     });
@@ -228,9 +229,11 @@
       var a = P[p];
       if (a.lock[i] || g[p][i]) return false;
       if (a.forbid[days[i].dow]) return false;
+      var block = blocks[blockOf[i]];
+      if (block && block.length === 2) { var other = block[0] === i ? block[1] : block[0]; if (a.forbid[days[other].dow] || (a.lock[other] && !isWork(g[p][other]))) return false; }
       if (isEarly(s) && i > 0 && g[p][i - 1] === 'C1' && !lightPair(days, i - 1)) return false;
       if (s === 'C1' && i + 1 < D && isEarly(g[p][i + 1]) && !lightPair(days, i)) return false;
-      if (s === 'D2' && d2InRun(g[p], i)) return false;
+      if ((s === 'D2' || s === 'C1') && shiftInRun(g[p], i, s)) return false;
       return true;
     }
     function construct(g, rnd) {
@@ -289,14 +292,15 @@
       }
       for (p = 0; p < N; p++) {
         var row = g[p], a = P[p], worked = 0, we = 0, prevBlock = false, cnt4 = { C1: 0, M5: 0, M1: 0, D2: 0 }, shiftDays = 0;
-        var mr = a.maxRun, prevLen = -1, restLen = -1, segStart = 0, d2run = false;
+        var mr = a.maxRun, prevLen = -1, restLen = -1, segStart = 0, d2run = false, c1run = false;
         for (i = 0; i <= D; i++) {
           var w = i < D && isWork(row[i]);
           if (i < D) {
             if (w) {
               worked++;
               if (row[i] === 'D2') { if (d2run) sc += 4000; d2run = true; }
-            } else d2run = false;
+              if (row[i] === 'C1') { if (c1run) sc += 100000; c1run = true; }
+            } else { d2run = false; c1run = false; }
             if (cnt4[row[i]] !== undefined) { cnt4[row[i]]++; shiftDays++; }
             if (badC1(days, row, i)) sc += 5000;
             else if (row[i] === 'C1' && i + 1 < D && isEarly(row[i + 1])) sc += 10;
@@ -333,7 +337,7 @@
           var on = cntB > 0;
           if (on) {
             we++;
-            if (b.length === 2 && cntB === 1) sc += 80;
+            if (b.length === 2 && cntB === 1) sc += 100000;
             if (prevBlock) sc += 120;
             if (b.length === 2 && cntB === 2 && row[b[0]] === row[b[1]]) sc += row[b[0]] === 'C1' ? 400 : 90;
           }
@@ -341,7 +345,7 @@
         }
         var wd = we - a.weDesired; sc += 150 * wd * wd;
         for (var q = 0; q < 4; q++) {
-          var sh = SHIFTS[q], ed = cnt4[sh] - shiftDays * shareOf[sh];
+          var sh = SHIFTS[q], ed = cnt4[sh] - a.exp * shareOf[sh];
           sc += EQW[sh] * ed * ed;
         }
       }
@@ -431,7 +435,7 @@
     var issues = [];
     var cover = days.map(function () { return {}; });
     var people = all.map(function (a) {
-      var worked = 0, c1 = 0, run = 0, we = 0, shifts = {}, d2seen = false;
+      var worked = 0, c1 = 0, run = 0, we = 0, shifts = {}, d2seen = false, c1seen = false;
       for (var i = 0; i < D; i++) {
         var c = a.row[i];
         if (c) cover[i][c] = (cover[i][c] || 0) + 1;
@@ -439,13 +443,14 @@
           worked++; run++;
           shifts[c] = (shifts[c] || 0) + 1;
           if (c === 'D2') { if (d2seen) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: '2 D2 (coupés) dans la même série' }); d2seen = true; }
+          if (c === 'C1') { if (c1seen) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: '2 C1 dans la même série' }); c1seen = true; }
           var mr = a.maxRun || maxC;
           if (run === mr + 1) issues.push({ lvl: 'warn', d: i + 1, sid: a.s.id, txt: 'plus de ' + mr + ' jours de suite' });
           if (a.forbid[days[i].dow]) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'travaille un jour exclu' });
-        } else { run = 0; d2seen = false; }
+        } else { run = 0; d2seen = false; c1seen = false; }
         if (c === 'C1') { c1++; if (badC1(days, a.row, i)) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'C1 suivi d’un horaire du matin' }); }
       }
-      info.blocks.forEach(function (b) { if (b.some(function (i) { return isWork(a.row[i]); })) we++; });
+      info.blocks.forEach(function (b) { var n = b.filter(function (i) { return isWork(a.row[i]); }).length; if (n) we++; if (b.length === 2 && n === 1) issues.push({ lvl: 'err', d: b[0] + 1, sid: a.s.id, txt: 'Week-end incomplet : samedi et dimanche indissociables' }); });
       var dueH = (a.s.taux || 0) / 100 * info.workingDays * hpd;
       var doneH = (worked + a.credit) * hpd;
       return { id: a.s.id, worked: worked, credit: a.credit, target: a.target, we: we, c1: c1, shifts: shifts, dueH: dueH, doneH: doneH, balance: doneH - dueH };
