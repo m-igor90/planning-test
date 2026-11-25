@@ -225,7 +225,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     <section class="panel">
       <h3>Codes et règles appliquées</h3>
       <div class="legend" id="legend"></div>
-      <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune (Rachel : 3), répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (Magali : jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
+      <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune, répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (par ex. jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
     </section>
   </div>
 </div>
@@ -321,10 +321,23 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     render();
   }
 
-  function startLocal(reason) {
+  function startLocal(reason, exampleTried) {
     state.mode = 'local';
     var o = lsRead();
-    state.team = o.team || { staff: [], rules: { hpd: 8 + 25 / 60, maxConsecutive: 5, tutoratMax: 2 } };
+    // Première ouverture hors de claude.ai : charger l'exemple publié à côté de la page (exemple.json), s'il existe
+    if (!o.team && !exampleTried && window.fetch) {
+      fetch('exemple.json').then(function (r) { return r.ok ? r.json() : null; }).then(function (ex) {
+        if (ex && ex.team && Array.isArray(ex.team.staff)) {
+          lsWrite({ team: ex.team, plans: ex.plans || {} });
+          var ks = Object.keys(ex.plans || {}).sort();
+          if (ks.length) { state.y = +ks[0].slice(0, 4); state.m = +ks[0].slice(5, 7); }
+          toast('Exemple chargé : modifiez l’équipe dans « Équipe & règles »');
+        }
+        startLocal(reason, true);
+      }, function () { startLocal(reason, true); });
+      return;
+    }
+    state.team = o.team || { staff: [], rules: { hpd: 8 + 25 / 60, maxConsecutive: 5, tutoratMax: 2, fillHours: true, renfort: 'D2' } };
     setStatus('off', reason || 'Mode local : enregistré dans ce navigateur');
     subscribePlan();
   }

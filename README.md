@@ -14,8 +14,13 @@ Une seule page (`index.html`) et le moteur de génération (`planner.js`), sans 
 - **Exporter (CSV)** pour Excel, **Exporter les données (JSON)** / **Importer une sauvegarde** pour sauvegarder ou
   reprendre l'équipe et les plannings.
 
-Hors de claude.ai, les données sont enregistrées dans le navigateur (localStorage) : elles ne sont pas partagées
-entre appareils. Exporter régulièrement une sauvegarde JSON.
+Application de démonstration, sans serveur ni base de données : les données sont enregistrées dans le navigateur
+(localStorage) et ne sont pas partagées entre appareils. Pour passer d'un appareil à l'autre, utiliser
+« Exporter les données (JSON) » puis « Importer une sauvegarde ».
+
+À la première ouverture, la page charge `exemple.json` : une équipe de 10 personnes désignées par les 2 premières lettres de leur prénom
+et un planning de janvier 2027. Pour repartir de zéro, effacer les données du site dans le navigateur ou modifier
+l'équipe dans « Équipe & règles ».
 
 ## Règles du générateur
 
@@ -37,4 +42,4 @@ node --test tests/*.test.js
 
 ## Confidentialité
 
-Le dépôt ne contient aucune donnée de l'équipe. Ne pas y ajouter de sauvegarde JSON nominative si le dépôt est public.
+Le dépôt est public : les personnes n'y figurent que par leurs initiales. Ne pas y ajouter de sauvegarde avec des noms.
