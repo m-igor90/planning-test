@@ -131,6 +131,44 @@
     return { fixed: false, v: t >= 80 ? 2 : t >= 60 ? 1.3 : 1 };
   }
 
+  /* Week-ends équitables : chacun reçoit sa part selon son taux et les week-ends où il est disponible
+     (vacances, jours exclus, désirs fermes). Les volontaires (weekendsPlus) en prennent davantage,
+     ce qui allège les autres. Donne une cible réelle et une fourchette entière [weLo, weHi]. */
+  function weekendTargets(people, info) {
+    var blocks = info.blocks, days = info.days, nb = blocks.length, S = nb * 3, rest = S, free = [];
+    people.forEach(function (a) {
+      var avail = 0;
+      blocks.forEach(function (b) {
+        if (b.every(function (i) {
+          if (a.lock[i]) return isWork(a.row[i]);
+          if (a.forbid[days[i].dow]) return false;
+          return days[i].needs.some(function (sh) { return !hardBlocked(a, i, sh); });
+        })) avail++;
+      });
+      var base = baseWeekends(a.s), plus = !!a.s.weekendsPlus && !base.fixed;
+      a.weAvail = avail; a.wePlus = plus; a.weFixed = base.fixed; a.weDone = false;
+      a.weCap = base.fixed ? Math.min(base.v, avail) : plus ? avail : Math.min(avail, Math.ceil(nb / 2));
+      a.weRaw = base.fixed ? 0 : (base.v + (plus ? 1 : 0)) * (nb ? avail / nb : 0);
+      if (base.fixed) { a.weDesired = a.weCap; rest -= a.weCap; } else free.push(a);
+    });
+    rest = Math.max(0, rest);
+    for (var k = 0; k < 6; k++) {
+      var open = free.filter(function (a) { return !a.weDone; }), raw = 0, left = rest;
+      free.forEach(function (a) { if (a.weDone) left -= a.weDesired; });
+      open.forEach(function (a) { raw += a.weRaw; });
+      var f = raw > 0 ? Math.max(0, left) / raw : 0, capped = false;
+      open.forEach(function (a) { var v = a.weRaw * f; if (v >= a.weCap) { a.weDesired = a.weCap; a.weDone = true; capped = true; } else a.weDesired = v; });
+      if (!capped) break;
+    }
+    people.forEach(function (a) {
+      var d = a.weDesired;
+      a.weLo = a.weFixed ? a.weCap : Math.min(a.weCap, Math.floor(d + 0.2));
+      a.weHi = a.weFixed ? a.weCap : Math.min(a.weCap, Math.max(a.weLo, Math.ceil(d - 0.2)));
+      // Au moins un week-end pour chacun quand il est disponible : les volontaires prennent le surplus, pas la part des autres.
+      if (!a.weFixed && a.weAvail >= 2 && nb >= 4 && a.weLo < 1) { a.weLo = 1; a.weHi = Math.max(a.weHi, 1); }
+    });
+  }
+
   /* Prépare l'état commun à la génération et à l'évaluation. */
   function buildState(staff, info, cells, wishes) {
     var D = info.D;
@@ -213,10 +251,7 @@
     P.forEach(function (a) { a.exp = a.lockedWork + a.cap * f; a.maxDays = a.target - a.credit; a.maxRun = Math.min(a.maxRun || maxC, maxC); });
 
     // Week-ends souhaités
-    var S = blocks.length * 3, fixedSum = 0, autoSum = 0;
-    P.forEach(function (a) { var b = baseWeekends(a.s); a.weBase = b; if (b.fixed) fixedSum += b.v; else autoSum += b.v; });
-    var scale = autoSum > 0 ? Math.max(0, S - fixedSum) / autoSum : 0;
-    P.forEach(function (a) { a.weDesired = a.weBase.fixed ? a.weBase.v : a.weBase.v * scale; });
+    weekendTargets(P, info);
 
     // Part de chaque horaire dans le mois, pour une répartition équitable entre toutes
     var totalNeedSlots = 0, shareOf = { C1: 0, M5: 0, M1: 0, D2: 0 };
@@ -328,7 +363,7 @@
               if (!first) {
                 if (weWorked[p][bk]) sc += 20 - (g[p][b[0]] === s ? (s === 'C1' ? 15 : 6) : 0); else sc -= 8;
               } else {
-                sc += (a.weDesired - weCount[p]) * 6;
+                sc += (a.weDesired - weCount[p]) * 10 + (weCount[p] >= a.weHi ? -25 : 0);
                 if (bk > 0 && weWorked[p][bk - 1]) sc -= 6;
                 if (b.length > 1 && (a.lock[b[1]] || a.forbid[days[b[1]].dow])) sc -= 10;
               }
@@ -431,7 +466,7 @@
           }
           prevBlock = on;
         }
-        var wd = we - a.weDesired; sc += 150 * wd * wd;
+        var wd = we - a.weDesired; sc += 300 * wd * wd + 6000 * (Math.max(0, a.weLo - we) + Math.max(0, we - a.weHi));
         for (var q = 0; q < 4; q++) {
           var sh = SHIFTS[q], ed = cnt4[sh] - a.exp * shareOf[sh];
           sc += EQW[sh] * ed * ed;
@@ -533,6 +568,7 @@
     var info = monthInfo(opts.year, opts.month, opts.holidays), rules = opts.rules || {};
     var D = info.D, days = info.days, maxC = rules.maxConsecutive || 5, hpd = rules.hpd || (8 + 25 / 60);
     var all = buildState(opts.staff, info, opts.cells, opts.wishes);
+    weekendTargets(all.filter(function (a) { return a.s.role !== 'admin'; }), info);
     var issues = [], wishStats = { total: 0, missed: 0, cells: {} };
     var cover = days.map(function () { return {}; });
     var people = all.map(function (a) {
@@ -570,7 +606,13 @@
       var doneH = (worked + a.credit) * hpd;
       var runs = [], len = 0;
       for (var j = 0; j <= D; j++) { if (j < D && isWork(a.row[j])) len++; else if (len) { runs.push(len); len = 0; } }
-      return { id: a.s.id, runs: runs, avgRun: runs.length ? worked / runs.length : 0, worked: worked, credit: a.credit, target: a.target, we: we, c1: c1, shifts: shifts, dueH: dueH, doneH: doneH, balance: doneH - dueH };
+      return { id: a.s.id, weLo: a.weLo, weHi: a.weHi, wePlus: a.wePlus, runs: runs, avgRun: runs.length ? worked / runs.length : 0, worked: worked, credit: a.credit, target: a.target, we: we, c1: c1, shifts: shifts, dueH: dueH, doneH: doneH, balance: doneH - dueH };
+    });
+    var weOff = 0;
+    if (people.some(function (p) { return p.worked > 0; })) people.forEach(function (p) {
+      if (p.weLo === undefined || (p.we >= p.weLo && p.we <= p.weHi)) return;
+      weOff++;
+      issues.push({ lvl: 'warn', d: 0, sid: p.id, we: true, txt: p.we + ' week-end(s) au lieu de ' + (p.weLo === p.weHi ? p.weLo : p.weLo + ' à ' + p.weHi) });
     });
     var missing = 0, missingD2 = 0;
     days.forEach(function (dd, i) {
@@ -584,7 +626,7 @@
       });
     });
     issues.sort(function (x, y) { var o = { err: 0, warn: 1, info: 2 }; return o[x.lvl] - o[y.lvl] || x.d - y.d; });
-    return { info: info, people: people, wishes: wishStats, cover: cover, issues: issues, missing: missing, missingD2: missingD2 };
+    return { info: info, people: people, weOff: weOff, wishes: wishStats, cover: cover, issues: issues, missing: missing, missingD2: missingD2 };
   }
 
   var api = { restViolation: restViolation, SHIFTS: SHIFTS, isWork: isWork, isEarly: isEarly, monthInfo: monthInfo, holidaysDefault: holidaysDefault,

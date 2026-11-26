@@ -236,7 +236,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow">Démo · V1.2.0 · Service de soins</span>
+      <span class="eyebrow">Démo · V1.3.0 · Service de soins</span>
       <h1>Planning infirmier <span class="planning-hearts" aria-hidden="true"><span>♥︎</span><span>♥︎</span><span>♥︎</span></span></h1>
     </div>
     <div class="month">
@@ -281,14 +281,14 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
       <h3>Codes et règles appliquées</h3>
       <div class="legend" id="legend"></div>
       <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Jamais deux D2 (horaires coupés) dans la même série de jours travaillés. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune, répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (par ex. jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
-      <p class="note"><strong>Désirs</strong> : un désir « ferme » n’est jamais enfreint par le générateur ; un désir « souple » est respecté si possible. Un désir ponctuel remplace le désir de la semaine pour sa date. Dans la grille, violet plein = ponctuel, pointillé = chaque semaine. Le rythme « lissé » ou « condensé » est une préférence : la couverture et les règles de repos passent avant.</p>
+      <p class="note"><strong>Désirs</strong> : un désir « ferme » n’est jamais enfreint par le générateur ; un désir « souple » est respecté si possible. Un désir ponctuel remplace le désir de la semaine pour sa date. Dans la grille, violet plein = ponctuel, pointillé = chaque semaine. Week-ends répartis équitablement selon le taux (au moins un pour chacun) ; les volontaires en prennent davantage. Le rythme « lissé » ou « condensé » est une préférence : la couverture et les règles de repos passent avant.</p>
     </section>
   </div>
 </div>
 <dialog class="wdlg" id="wishDlg" aria-labelledby="wishTitle"></dialog>
 <div class="toast" id="toast" hidden></div>
 
-<script src="planner.js?v=1.2.0"></script>
+<script src="planner.js?v=1.3.0"></script>
 <script>
 (function () {
   'use strict';
@@ -674,7 +674,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
       h += '<tr class="group"><th class="col-name">' + g[1] + '</th><th colspan="' + (info.D + 4) + '"></th></tr>';
       list.forEach(function (s) {
         var cells = state.plan.cells[s.id] || {}, p = byId[s.id];
-        h += '<tr><th class="col-name"><span class="name" title="' + esc(displayName(s)) + '">' + esc(displayName(s)) + '</span><span class="meta">' + esc(s.taux) + ' %' + (s.role === 'admin' ? ' · admin' : s.rythme === 'lisse' ? ' · lissé' : s.rythme === 'condense' ? ' · condensé' : '') + '</span></th>';
+        h += '<tr><th class="col-name"><span class="name" title="' + esc(displayName(s)) + '">' + esc(displayName(s)) + '</span><span class="meta">' + esc(s.taux) + ' %' + (s.role === 'admin' ? ' · admin' : (s.rythme === 'lisse' ? ' · lissé' : s.rythme === 'condense' ? ' · condensé' : '') + (s.weekendsPlus && s.role !== 'admin' ? ' · WE+' : '')) + '</span></th>';
         info.days.forEach(function (d, i) {
           var pc = P.parseCell(cells[d.d]), inner;
           if (pc.c) inner = codeHtml(pc.c);
@@ -690,7 +690,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
         });
         var days = p.worked + p.credit;
         var runTip = p.runs.length ? 'Séries ce mois : ' + p.runs.join(' · ') + ' jours' : '';
-        h += '<td class="sum" title="' + esc('Jours travaillés + vacances / jours dus' + (runTip ? '. ' + runTip : '')) + '">' + days + ' / ' + p.target + '</td><td class="sum">' + p.we + '</td><td class="sum"><span class="' + (p.balance < -0.01 ? 'neg' : p.balance > 0.01 ? 'pos' : '') + '">' + fmtH(p.balance) + '</span></td><td class="sum mix">' + (s.role === 'admin' ? '<span class="muted">—</span>' : P.SHIFTS.map(function (k) { return '<b class="k-' + k + '">' + (p.shifts[k] || 0) + '</b>'; }).join(' · ')) + '</td></tr>';
+        h += '<td class="sum" title="' + esc('Jours travaillés + vacances / jours dus' + (runTip ? '. ' + runTip : '')) + '">' + days + ' / ' + p.target + '</td><td class="sum" title="' + esc(s.role === 'admin' || p.weLo === undefined ? '' : 'Week-ends : ' + p.we + ' (attendu ' + (p.weLo === p.weHi ? p.weLo : p.weLo + ' à ' + p.weHi) + ')' + (p.wePlus ? ' · volontaire' : '')) + '"><span class="' + (s.role !== 'admin' && p.weLo !== undefined && p.worked && (p.we < p.weLo || p.we > p.weHi) ? 'neg' : '') + '">' + p.we + '</span></td><td class="sum"><span class="' + (p.balance < -0.01 ? 'neg' : p.balance > 0.01 ? 'pos' : '') + '">' + fmtH(p.balance) + '</span></td><td class="sum mix">' + (s.role === 'admin' ? '<span class="muted">—</span>' : P.SHIFTS.map(function (k) { return '<b class="k-' + k + '">' + (p.shifts[k] || 0) + '</b>'; }).join(' · ')) + '</td></tr>';
       });
     });
     P.SHIFTS.forEach(function (s, si) {
@@ -720,6 +720,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     var other = errs - ev.missing;
     if (other > 0) h += '<span class="pill err">' + other + ' règle(s) non respectée(s)</span>';
     var planned = ev.people.some(function (p) { return p.worked > 0; });
+    if (planned) h += ev.weOff ? '<span class="pill warn">Week-ends : ' + ev.weOff + ' personne(s) hors de leur part</span>' : '<span class="pill ok">Week-ends répartis équitablement</span>';
     if (ev.wishes.total && planned) h += ev.wishes.missed ? '<span class="pill warn">Désirs : ' + ev.wishes.missed + ' non respecté(s) sur ' + ev.wishes.total + ' jour(s)</span>' : '<span class="pill ok">Désirs respectés : ' + ev.wishes.total + ' / ' + ev.wishes.total + '</span>';
     if (warns) h += '<span class="pill warn">' + warns + ' point(s) à surveiller</span>';
     h += '<span class="pill">' + info.workingDays + ' jours ouvrables · 100 % = ' + fmtH(info.workingDays * rules().hpd).replace('+', '') + '</span>';
@@ -731,7 +732,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     if (!ev.issues.length) { $('issues').innerHTML = '<li class="muted">Rien à signaler pour ce mois.</li>'; return; }
     $('issues').innerHTML = ev.issues.map(function (it) {
       var d = new Date(state.y, state.m - 1, it.d);
-      return '<li class="' + it.lvl + '"><span class="tag">' + DOW2[d.getDay()] + ' ' + it.d + '</span><span>' + (it.sid ? '<strong>' + esc(names[it.sid] || '') + '</strong> — ' : '') + esc(it.txt) + '</span></li>';
+      return '<li class="' + it.lvl + '"><span class="tag">' + (it.d ? DOW2[d.getDay()] + ' ' + it.d : 'Mois') + '</span><span>' + (it.sid ? '<strong>' + esc(names[it.sid] || '') + '</strong> — ' : '') + esc(it.txt) + '</span></li>';
     }).join('');
   }
 
@@ -772,7 +773,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     });
     h += '</div>';
     if (state.canWrite) h += '<div><button class="btn" id="addStaff">Ajouter une personne</button></div>';
-    h += '<p class="note">« Max suite » : nombre maximal de jours de travail d’affilée pour cette personne (vide = règle générale). « Week-ends » vide = automatique (90–80 % : 2, 70–60 % : 1 à 2, 50 % : 1, ajusté au nombre de week-ends du mois). Rôle « Administratif » : la personne reçoit des CS en semaine et ne compte pas dans les 4 horaires.</p>';
+    h += '<p class="note">« Max suite » : nombre maximal de jours de travail d’affilée pour cette personne (vide = règle générale). « Week-ends » vide = automatique et équitable (90–80 % : 2, 70–60 % : 1 à 2, 50 % : 1, ajusté au nombre de week-ends du mois, aux vacances et aux volontaires) ; un nombre saisi est imposé. Rôle « Administratif » : la personne reçoit des CS en semaine et ne compte pas dans les 4 horaires.</p>';
     h += wishSettings(ro);
     h += '<h3>Règles</h3><div class="rules">' +
       '<label>Heures par jour<input type="text" id="r-hpd" value="' + hh + ':' + String(mm).padStart(2, '0') + '"' + ro + '></label>' +
@@ -791,19 +792,21 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   }
 
   function wishSettings(ro) {
-    var h = '<h3>Désirs et rythme de travail</h3><p class="note">Ouvrez une fiche pour noter les désirs qui reviennent chaque semaine et le rythme préféré. Pour une date précise, utilisez le bouton « Désir » au-dessus du planning.</p><div class="wcards">';
+    var h = '<h3>Désirs, rythme et week-ends</h3><p class="note">Ouvrez une fiche pour noter les désirs qui reviennent chaque semaine, le rythme préféré et si la personne veut davantage de week-ends. Pour une date précise, utilisez le bouton « Désir » au-dessus du planning.</p><div class="wcards">';
     var list = staff().filter(function (s) { return s.role !== 'admin'; });
     list.forEach(function (s) {
       var sid = esc(s.id), open = !!state.openWish[s.id], desirs = s.desirs || {};
       var days = WEEK.filter(function (w) { return desirs[w] && desirs[w].non && desirs[w].non.length; });
       var once = (state.plan.wishes || {})[s.id] || {}, onceDays = Object.keys(once).sort(function (a, b) { return a - b; });
       var chips = '';
+      if (s.weekendsPlus) chips += '<span class="wchip">Volontaire WE +</span>';
       if (s.rythme) chips += '<span class="wchip">' + (s.rythme === 'lisse' ? 'Lissé' : 'Condensé') + '</span>';
       days.forEach(function (w) { chips += '<span class="wchip">' + DOW2[w] + ' : ' + P.describeWish(desirs[w].non) + '</span>'; });
       if (onceDays.length) chips += '<span class="wchip">' + onceDays.length + ' ponctuel(s) en ' + MONTHS[state.m - 1] + '</span>';
       h += '<div class="wcard" data-sid="' + sid + '"><button type="button" class="wcard-head" id="wh-' + sid + '" data-wopen aria-expanded="' + open + '"><strong>' + esc(displayName(s)) + '</strong>' + (chips || '<span class="muted" style="font-size:12px">Aucun désir</span>') + '<span class="chev">' + (open ? '▲' : '▼') + '</span></button>';
       if (open) {
         h += '<div class="wcard-body"><h4>Rythme préféré</h4><div class="seg">' + [['', 'Sans préférence'], ['lisse', 'Lissé'], ['condense', 'Condensé']].map(function (o) { return '<button type="button" id="wr-' + sid + '-' + o[0] + '" data-rythme="' + o[0] + '" aria-pressed="' + ((s.rythme || '') === o[0]) + '"' + ro + '>' + o[1] + '</button>'; }).join('') + '</div><div class="note">' + RHYTHM_TXT[s.rythme || ''] + '</div>';
+        h += '<h4>Week-ends</h4><div class="seg">' + [['', 'Comme l’équipe'], ['1', 'Volontaire pour plus']].map(function (o) { return '<button type="button" id="wwe-' + sid + '-' + (o[0] || 'n') + '" data-weplus="' + o[0] + '" aria-pressed="' + (!!s.weekendsPlus === !!o[0]) + '"' + ro + '>' + o[1] + '</button>'; }).join('') + '</div><div class="note">' + (s.weekends != null && s.weekends !== '' ? 'Un nombre fixe de week-ends (' + esc(s.weekends) + ') est saisi dans l’équipe : il est prioritaire sur ce choix.' : s.weekendsPlus ? 'Reçoit environ un week-end de plus que sa part ; les autres en font un peu moins, chacun gardant au moins un week-end.' : 'Part équitable selon le taux : en général 2 week-ends à 80–90 %, 1 à 2 à 60–70 %, 1 à 50 %, moins en cas de vacances.') + '</div>';
         h += '<h4>Chaque semaine</h4><div class="note">Touchez une case pour exclure (✕) un horaire ce jour-là. « Ferme » = impératif, « Souple » = si possible.</div><table class="wmatrix"><thead><tr><th class="row"></th>' + WEEK.map(function (w) { return '<th>' + DOW2[w] + '</th>'; }).join('') + '</tr></thead><tbody>';
         P.SHIFTS.forEach(function (c) {
           h += '<tr><th class="row">' + c + '<small>' + SHIFT_SUB[c] + '</small></th>' + WEEK.map(function (w) {
@@ -834,7 +837,8 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     if (!state.canWrite) return true;
     if (t.dataset.pedit !== undefined) { openWish(s.id, +t.dataset.pedit); return true; }
     var desirs = s.desirs || {};
-    if (t.dataset.rythme !== undefined) { if (t.dataset.rythme) s.rythme = t.dataset.rythme; else delete s.rythme; }
+    if (t.dataset.weplus !== undefined) { if (t.dataset.weplus) s.weekendsPlus = true; else delete s.weekendsPlus; }
+    else if (t.dataset.rythme !== undefined) { if (t.dataset.rythme) s.rythme = t.dataset.rythme; else delete s.rythme; }
     else if (t.dataset.wc) {
       var w = t.dataset.wd, c = t.dataset.wc, old = desirs[w] || { non: [], souple: false };
       var had = old.non.indexOf(c) >= 0, non = P.SHIFTS.filter(function (k) { return k === c ? !had : old.non.indexOf(k) >= 0; });

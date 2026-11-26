@@ -75,3 +75,21 @@ test('désir impossible à couvrir : l’alerte en donne la raison', () => {
   const ev = P.evaluate({ ...o, cells: P.generate({ ...o, seed: 1 }).cells });
   assert.ok(ev.issues.some(i => i.d === 5 && /^C1 non couvert — exclu par un désir ferme/.test(i.txt)));
 });
+
+test('week-ends : répartition équitable, volontaire et vacances', () => {
+  const holidays = P.holidaysDefault(2027, 1);
+  const vac = {}; for (let d = 4; d <= 17; d++) vac[d] = '!V';
+  const team = staff.map(s => s.id === 'b' ? { ...s, weekendsPlus: true } : s);
+  for (const seed of [1, 2]) {
+    const o = { staff: team, rules, year: 2027, month: 1, holidays, cells: { c: vac } };
+    const ev = P.evaluate({ ...o, cells: P.generate({ ...o, seed }).cells });
+    const p = id => ev.people.find(x => x.id === id);
+    for (const x of ev.people.filter(x => x.id !== 'j')) {
+      assert.ok(x.we >= x.weLo && x.we <= x.weHi, x.id + ' : ' + x.we + ' WE, attendu ' + x.weLo + '-' + x.weHi);
+      assert.ok(x.we >= 1, x.id + ' : au moins un week-end');
+    }
+    assert.ok(p('b').we >= 2, 'la volontaire en fait au moins 2');
+    assert.ok(p('c').weHi <= 1, 'les vacances réduisent la part');
+    assert.strictEqual(ev.weOff, 0);
+  }
+});

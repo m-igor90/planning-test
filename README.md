@@ -33,6 +33,10 @@ l'équipe dans « Équipe & règles ».
   l’explique) ; « Souple » est respecté si possible, la couverture passant avant.
 - **Rythme** : « Lissé » (surtout des séries de 2 jours, charge régulière) ou « Condensé » (séries plus longues, repos
   plus longs). C’est une préférence : les règles de repos et de durée maximale restent prioritaires.
+- **Week-ends** : part équitable selon le taux (en général 2 à 80–90 %, 1 à 2 à 60–70 %, 1 à 50 %), réduite en cas de
+  vacances ou d’indisponibilité, au moins un pour chacun. « Volontaire pour plus » donne environ un week-end de plus ;
+  les autres en font alors un peu moins. Un nombre saisi dans la colonne « Week-ends » de l’équipe reste imposé.
+  Une alerte signale toute personne hors de sa part.
 - Une saisie fixée à la main reste prioritaire ; elle est signalée si elle contredit un désir.
 - Les désirs ne concernent pas le rôle administratif (CS). Tutorat, réunion et formation comptent comme du matin, la nuit comme du soir.
 
