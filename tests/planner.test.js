@@ -93,3 +93,35 @@ test('week-ends : répartition équitable, volontaire et vacances', () => {
     assert.strictEqual(ev.weOff, 0);
   }
 });
+
+test('jours fériés selon la région', () => {
+  assert.deepStrictEqual(P.holidaysDefault(2027, 1, 'CH-JU'), [1, 2]);
+  assert.deepStrictEqual(P.holidaysDefault(2027, 5, 'FR'), [1, 6, 8, 17]);
+  assert.deepStrictEqual(P.holidaysDefault(2027, 9, 'CH-VD'), [20], 'lundi du Jeûne fédéral');
+  assert.deepStrictEqual(P.holidaysDefault(2027, 9, 'CH-GE'), [9], 'Jeûne genevois');
+  assert.deepStrictEqual(P.holidaysDefault(2027, 1, 'AUCUN'), []);
+});
+
+test('continuité avec le mois précédent : séries, C1 et week-end coupé', () => {
+  // août 2027 commence un dimanche (samedi 31 juillet au mois précédent)
+  const prev = { year: 2027, month: 7, holidays: [], cells: {
+    a: { 27: 'M1', 28: 'M5', 29: 'M1', 30: 'M5' },   // 4 jours de suite, jusqu'au vendredi 30
+    c: { 30: 'M5', 31: 'C1' },                      // C1 le samedi
+    e: { 31: 'M1' }, f: { 31: 'M5' } } };
+  const o = { staff, rules, year: 2027, month: 8, holidays: P.holidaysDefault(2027, 8), cells: {}, prev };
+  const cells = P.generate({ ...o, seed: 1 }).cells, w = (id, d) => P.isWork(P.parseCell((cells[id] || {})[d]).c);
+  assert.ok(!w('a', 1), 'A ne prolonge pas sa série de 4 jours');
+  assert.ok(['c', 'e', 'f'].every(id => w(id, 1)), 'le dimanche 1 suit le samedi travaillé');
+  assert.ok(['b', 'd', 'g', 'h', 'i'].every(id => !w(id, 1)), 'dimanche 1 réservé à celles du samedi');
+  const ev = P.evaluate({ ...o, cells });
+  assert.deepStrictEqual(ev.issues.filter(i => i.lvl === 'err' && i.d === 1 && i.sid), []);
+  // sans le mois précédent, le dimanche isolé n'est pas compté comme un week-end du mois
+  assert.strictEqual(P.monthInfo(2027, 8, []).weekends, 4);
+});
+
+test('rattrapage du solde reporté', () => {
+  const o = { staff, rules: { ...rules, rattrapage: 2, hpd: 8 }, year: 2027, month: 1, holidays: P.holidaysDefault(2027, 1), cells: {}, seed: 1 };
+  const base = P.evaluate({ ...o, cells: P.generate(o).cells }).people.find(p => p.id === 'f').worked;
+  const plus = P.evaluate({ ...o, cells: P.generate({ ...o, carry: { f: 40 } }).cells }).people.find(p => p.id === 'f').worked;
+  assert.ok(plus <= base - 1, '40 h en plus : moins de jours (' + base + ' → ' + plus + ')');
+});

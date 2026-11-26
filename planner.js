@@ -20,14 +20,36 @@
     return new Date(y, month - 1, day);
   }
 
-  /* Jours fériés par défaut (modifiables dans l'application). */
-  function holidaysDefault(y, m) {
+  /* Jours fériés par région (listes indicatives, modifiables jour par jour dans l'application).
+     fixes : [mois, jour] ; mobiles : jours après Pâques (-2 Vendredi saint, 1 lundi de Pâques, 39 Ascension,
+     50 lundi de Pentecôte, 60 Fête-Dieu) ; siLundi : seulement s'il tombe un lundi. */
+  var REGIONS = [
+    { id: 'CH-JU', nom: 'Suisse — Jura', fixes: [[1, 1], [1, 2], [5, 1], [6, 23], [8, 1], [8, 15], [11, 1], [12, 25], [12, 26]], mobiles: [-2, 1, 39, 50, 60] },
+    { id: 'CH-BE', nom: 'Suisse — Berne (dont Jura bernois)', fixes: [[1, 1], [1, 2], [8, 1], [12, 25], [12, 26]], mobiles: [-2, 1, 39, 50] },
+    { id: 'CH-NE', nom: 'Suisse — Neuchâtel', fixes: [[1, 1], [3, 1], [5, 1], [8, 1], [12, 25]], mobiles: [-2, 39], siLundi: [[1, 2], [12, 26]] },
+    { id: 'CH-VD', nom: 'Suisse — Vaud', fixes: [[1, 1], [1, 2], [8, 1], [12, 25]], mobiles: [-2, 1, 39, 50], jeune: 'federal' },
+    { id: 'CH-GE', nom: 'Suisse — Genève', fixes: [[1, 1], [8, 1], [12, 25], [12, 31]], mobiles: [-2, 1, 39, 50], jeune: 'genevois' },
+    { id: 'CH-FR', nom: 'Suisse — Fribourg (communes catholiques)', fixes: [[1, 1], [8, 1], [8, 15], [11, 1], [12, 8], [12, 25]], mobiles: [-2, 39, 60] },
+    { id: 'CH-FRR', nom: 'Suisse — Fribourg (communes réformées)', fixes: [[1, 1], [1, 2], [8, 1], [12, 25], [12, 26]], mobiles: [-2, 1, 39, 50] },
+    { id: 'CH-VS', nom: 'Suisse — Valais', fixes: [[1, 1], [3, 19], [8, 1], [8, 15], [11, 1], [12, 8], [12, 25]], mobiles: [39, 60] },
+    { id: 'CH-SO', nom: 'Suisse — Soleure', fixes: [[1, 1], [8, 1], [8, 15], [11, 1], [12, 25]], mobiles: [-2, 39, 60] },
+    { id: 'CH-BS', nom: 'Suisse — Bâle-Ville / Bâle-Campagne', fixes: [[1, 1], [5, 1], [8, 1], [12, 25], [12, 26]], mobiles: [-2, 1, 39, 50] },
+    { id: 'FR', nom: 'France', fixes: [[1, 1], [5, 1], [5, 8], [7, 14], [8, 15], [11, 1], [11, 11], [12, 25]], mobiles: [1, 39, 50] },
+    { id: 'FR-AM', nom: 'France — Alsace-Moselle', fixes: [[1, 1], [5, 1], [5, 8], [7, 14], [8, 15], [11, 1], [11, 11], [12, 25], [12, 26]], mobiles: [-2, 1, 39, 50] },
+    { id: 'AUCUN', nom: 'Aucun (saisie à la main)', fixes: [], mobiles: [] }
+  ];
+  function holidaysDefault(y, m, region) {
+    var R = REGIONS.filter(function (r) { return r.id === region; })[0] || REGIONS[0];
     var e = easter(y), list = [];
-    var add = function (date) { if (date.getMonth() + 1 === m) list.push(date.getDate()); };
+    var add = function (date) { if (date.getMonth() + 1 === m && list.indexOf(date.getDate()) < 0) list.push(date.getDate()); };
     var rel = function (n) { var d = new Date(e); d.setDate(d.getDate() + n); return d; };
-    [[1, 1], [1, 2], [5, 1], [6, 23], [8, 1], [8, 15], [11, 1], [12, 25], [12, 26]]
-      .forEach(function (x) { add(new Date(y, x[0] - 1, x[1])); });
-    [-2, 1, 39, 50, 60].forEach(function (n) { add(rel(n)); });
+    R.fixes.forEach(function (x) { add(new Date(y, x[0] - 1, x[1])); });
+    (R.siLundi || []).forEach(function (x) { var d = new Date(y, x[0] - 1, x[1]); if (d.getDay() === 1) add(d); });
+    R.mobiles.forEach(function (n) { add(rel(n)); });
+    if (R.jeune) { // 1er dimanche de septembre, puis jeudi suivant (Genève) ou lundi après le 3e dimanche (Vaud)
+      var s1 = new Date(y, 8, 1); while (s1.getDay() !== 0) s1.setDate(s1.getDate() + 1);
+      add(new Date(y, 8, s1.getDate() + (R.jeune === 'genevois' ? 4 : 15)));
+    }
     return list.sort(function (a, b) { return a - b; });
   }
 
@@ -41,11 +63,12 @@
     var blockOf = new Array(D).fill(-1);
     for (var i = 0; i < D; i++) {
       if (days[i].dow === 6) { var b = [i]; if (i + 1 < D) b.push(i + 1); blocks.push(b); }
-      else if (i === 0 && days[i].dow === 0) blocks.push([0]);
+      else if (i === 0 && days[i].dow === 0) { var c = [0]; c.cont = true; blocks.push(c); } // samedi au mois précédent
     }
     blocks.forEach(function (b, k) { b.forEach(function (i) { blockOf[i] = k; }); });
+    var counted = blocks.filter(function (b) { return !b.cont; }).length;
     var workingDays = days.filter(function (x) { return !x.we && !x.hol; }).length;
-    return { y: y, m: m, D: D, days: days, blocks: blocks, blockOf: blockOf, workingDays: workingDays };
+    return { y: y, m: m, D: D, days: days, blocks: blocks, blockOf: blockOf, workingDays: workingDays, weekends: counted };
   }
 
   /* Un C1 suivi d'un horaire du matin n'est accepté qu'entre deux jours de week-end / fériés
@@ -55,9 +78,10 @@
     return !!(a && b && (a.we || a.hol) && (b.we || b.hol));
   }
   /* Un D2 (horaire coupé) au plus par série de jours travaillés d'affilée. */
-  function shiftInRun(row, i, shift) {
+  function shiftInRun(row, i, shift, pre) {
     var k;
     for (k = i - 1; k >= 0 && isWork(row[k]); k--) if (row[k] === shift) return true;
+    if (k < 0 && pre && pre.runHas[shift]) return true;
     for (k = i + 1; k < row.length && isWork(row[k]); k++) if (row[k] === shift) return true;
     return false;
   }
@@ -131,11 +155,35 @@
     return { fixed: false, v: t >= 80 ? 2 : t >= 60 ? 1.3 : 1 };
   }
 
+  /* Fin du mois précédent pour une personne : série en cours, repos, dernier week-end. */
+  var NOPRE = { known: false, codes: [], run: 0, rest: 0, lastRun: 0, runHas: {}, lastC1: false, light: false, satWorked: false, lastWe: false };
+  function prevTail(s, prev, info) {
+    if (!prev || !prev.cells) return NOPRE;
+    var pi = monthInfo(prev.year, prev.month, prev.holidays), src = prev.cells[s.id] || {}, row = [];
+    for (var d = 1; d <= pi.D; d++) row.push(parseCell(src[d]).c);
+    var t = { known: true, codes: row.slice(-14), run: 0, rest: 0, lastRun: 0, runHas: {} }, i = pi.D - 1;
+    while (i >= 0 && isWork(row[i])) { t.run++; t.runHas[row[i]] = true; i--; }
+    while (t.run === 0 && i >= 0 && !isWork(row[i])) { t.rest++; i--; }
+    while (t.run === 0 && i >= 0 && isWork(row[i])) { t.lastRun++; i--; }
+    var last = pi.days[pi.D - 1], first = info.days[0];
+    t.lastC1 = row[pi.D - 1] === 'C1';
+    t.light = (last.we || last.hol) && (first.we || first.hol);
+    t.satWorked = last.dow === 6 && isWork(row[pi.D - 1]);
+    var lb = pi.blocks[pi.blocks.length - 1];
+    t.lastWe = !!lb && lb.some(function (x) { return isWork(row[x]); });
+    return t;
+  }
+  /* Règle des repos en tenant compte des 14 derniers jours du mois précédent ; renvoie un jour du mois ou -1. */
+  function restCheck(a, row, max) {
+    var o = a.pre.codes.length, r = restViolation(o ? a.pre.codes.concat(row) : row, max, o);
+    return r < 0 ? -1 : r - o;
+  }
+
   /* Week-ends équitables : chacun reçoit sa part selon son taux et les week-ends où il est disponible
      (vacances, jours exclus, désirs fermes). Les volontaires (weekendsPlus) en prennent davantage,
      ce qui allège les autres. Donne une cible réelle et une fourchette entière [weLo, weHi]. */
   function weekendTargets(people, info) {
-    var blocks = info.blocks, days = info.days, nb = blocks.length, S = nb * 3, rest = S, free = [];
+    var days = info.days, blocks = info.blocks.filter(function (b) { return !b.cont; }), nb = blocks.length, S = nb * 3, rest = S, free = [];
     people.forEach(function (a) {
       var avail = 0;
       blocks.forEach(function (b) {
@@ -170,7 +218,7 @@
   }
 
   /* Prépare l'état commun à la génération et à l'évaluation. */
-  function buildState(staff, info, cells, wishes) {
+  function buildState(staff, info, cells, wishes, prev) {
     var D = info.D;
     return staff.map(function (s) {
       var row = new Array(D).fill(''), lock = new Array(D).fill(false), src = (cells && cells[s.id]) || {};
@@ -184,20 +232,21 @@
       (s.joursInterdits || []).forEach(function (w) { forbid[w] = 1; });
       var wish = info.days.map(function (day) { return wishFor(s, wishes, day.d, day.dow); });
       return { s: s, row: row, lock: lock, credit: credit, target: targetDays(s, info), forbid: forbid,
-        wish: wish, rythme: RHYTHMS[s.rythme] ? s.rythme : '',
-        maxRun: Math.min((s.id === 'r' || /^rachel$/i.test(s.prenom || '') || +s.taux !== 90) ? 3 : 4, +s.maxSuite > 0 ? +s.maxSuite : 4) };
+        wish: wish, pre: prevTail(s, prev, info), rythme: RHYTHMS[s.rythme] ? s.rythme : '',
+        maxRun: Math.min(+s.taux !== 90 ? 3 : 4, +s.maxSuite > 0 ? +s.maxSuite : 4) };
     });
   }
 
   // CONTRAINTE NON NEGOCIABLE : au plus deux blocs entre deux repos de 2 jours.
-  function restViolation(row, max) {
+  function restViolation(row, max, off) {
+    off = off || 0;
     var blocks = 0, run = 0, rest = 2;
     for (var i = 0; i < row.length; i++) {
       if (isWork(row[i])) {
-        if (!run) { if (rest >= 2) blocks = 0; blocks++; if (blocks > 2) return i; }
-        run++; if (run > max) return i;
-        if (run === 4 && (i >= 4 && isWork(row[i-4]) || i >= 5 && isWork(row[i-5]))) return i;
-        if (run === 4 && (isWork(row[i+1]) || isWork(row[i+2]))) return i;
+        if (!run) { if (rest >= 2) blocks = 0; blocks++; if (blocks > 2 && i >= off) return i; }
+        run++; if (run > max && i >= off) return i;
+        if (run === 4 && i >= off && (i >= 4 && isWork(row[i-4]) || i >= 5 && isWork(row[i-5]))) return i;
+        if (run === 4 && (isWork(row[i+1]) || isWork(row[i+2])) && i + 2 >= off) return Math.max(i, off);
         rest = 0;
       } else { run = 0; rest++; }
     }
@@ -211,7 +260,13 @@
     // Compléter les heures : un horaire de renfort en plus en semaine pour atteindre le taux de chacune
     var fill = !!rules.fillHours, RF = rules.renfort || 'D2';
     var seed = opts.seed || (Date.now() & 0x7fffffff);
-    var all = buildState(staff, info, opts.cells, opts.wishes);
+    var all = buildState(staff, info, opts.cells, opts.wishes, opts.prev);
+    // Rattrapage du solde reporté : quelques jours de moins (heures en plus) ou de plus (heures en moins)
+    var catchUp = +rules.rattrapage || 0, hpd = rules.hpd || (8 + 25 / 60);
+    if (catchUp > 0 && opts.carry) all.forEach(function (a) {
+      var h = +opts.carry[a.s.id] || 0, k = Math.max(-catchUp, Math.min(catchUp, -Math.round(h / hpd)));
+      a.target = Math.max(0, a.target + k); a.catchUp = k;
+    });
 
     // Garder uniquement les cases fixées
     all.forEach(function (a) { for (var i = 0; i < D; i++) if (!a.lock[i]) a.row[i] = ''; });
@@ -291,7 +346,7 @@
       var cands = [];
       for (var i = 0; i < D; i++) {
         if (days[i].we || days[i].hol || a.lock[i] || row[i] || a.forbid[days[i].dow] || !allows(a.wish[i], 'T')) continue;
-        if (i > 0 && row[i - 1] === 'C1') continue;
+        if (i > 0 ? row[i - 1] === 'C1' : a.pre.lastC1) continue;
         var before = 0, after = 0, k;
         for (k = i - 1; k >= 0 && isWork(row[k]); k--) before++;
         for (k = i + 1; k < D && isWork(row[k]); k++) after++;
@@ -304,7 +359,7 @@
       for (var c = 0; c < cands.length && have < tMax && worked < a.maxDays; c++) {
         var i2 = cands[c].i;
         if (picked.some(function (q) { return Math.abs(q - i2) < 5; })) continue;
-        var trial = row.slice(); trial[i2] = 'T'; var seen = {}, invalid = false; trial.forEach(function(c){ if (!isWork(c)) seen = {}; else if(c === 'C1' || c === 'D2') { if(seen[c]) invalid = true; seen[c] = true; } }); if(invalid || restViolation(trial, a.maxRun) >= 0) continue;
+        var trial = row.slice(); trial[i2] = 'T'; var seen = {}, invalid = false; trial.forEach(function(c){ if (!isWork(c)) seen = {}; else if(c === 'C1' || c === 'D2') { if(seen[c]) invalid = true; seen[c] = true; } }); if(invalid || restCheck(a, trial, a.maxRun) >= 0) continue;
         row[i2] = 'T'; picked.push(i2); have++; worked++;
       }
     });
@@ -322,7 +377,7 @@
     return { cells: out, score: bestScore, seed: seed };
 
     /* ---------- construction gloutonne ---------- */
-    function runBefore(row, i) { var n = 0; for (var k = i - 1; k >= 0 && isWork(row[k]); k--) n++; return n; }
+    function runBefore(row, i, a) { var n = 0, k; for (k = i - 1; k >= 0 && isWork(row[k]); k--) n++; return k < 0 && a ? n + a.pre.run : n; }
     function canTake(g, p, i, s) {
       var a = P[p];
       if (a.lock[i] || g[p][i]) return false;
@@ -330,10 +385,12 @@
       var block = blocks[blockOf[i]];
       if (block && block.length === 2) { var other = block[0] === i ? block[1] : block[0]; if (a.forbid[days[other].dow] || (!a.lock[other] && hardRest(a, other)) || (a.lock[other] && !isWork(g[p][other]))) return false; }
       if (isEarly(s) && i > 0 && g[p][i - 1] === 'C1' && !lightPair(days, i - 1)) return false;
+      if (isEarly(s) && i === 0 && a.pre.lastC1 && !a.pre.light) return false;
       if (s === 'C1' && i + 1 < D && isEarly(g[p][i + 1]) && !lightPair(days, i)) return false;
-      if ((s === 'D2' || s === 'C1') && shiftInRun(g[p], i, s)) return false;
+      if ((s === 'D2' || s === 'C1') && shiftInRun(g[p], i, s, a.pre)) return false;
       var trial = g[p].slice(); trial[i] = s;
-      return restViolation(trial, a.maxRun) < 0;
+      if (i === D - 1 && days[i].dow === 6) trial.push('M5'); // le dimanche suivant (mois prochain) devra suivre
+      return restCheck(a, trial, a.maxRun) < 0;
     }
     function construct(g, rnd) {
       var assigned = P.map(function (a, p) { return g[p].filter(isWork).length; });
@@ -348,7 +405,7 @@
           var bestP = -1, bestSc = -Infinity;
           for (p = 0; p < N; p++) {
             if (!canTake(g, p, i, s)) continue;
-            var a = P[p], run = runBefore(g[p], i);
+            var a = P[p], run = runBefore(g[p], i, a);
             if (s === 'D2' && assigned[p] >= a.exp) continue;
             var sc = (a.exp - assigned[p]) / Math.max(1, a.exp) * 10 + rnd() * 2;
             if (run >= a.maxRun) continue;
@@ -357,14 +414,18 @@
             if (softMissed(a, i, s)) sc -= 12;
             if (a.rythme === 'condense' && (run === 1 || run === 2)) sc += 2;
             if (a.rythme === 'lisse' && run >= 2) sc -= 2;
-            if (run === 0 && i > 0 && runBefore(g[p], i - 1) === 0 && i > 1 && isWork(g[p][i - 2])) sc -= 0.5;
-            if (bk >= 0) {
+            if (run === 0 && i > 0 && runBefore(g[p], i - 1, a) === 0 && i > 1 && isWork(g[p][i - 2])) sc -= 0.5;
+            if (bk >= 0 && blocks[bk].cont) {
+              // dimanche dont le samedi est au mois précédent : même personne que le samedi
+              if (a.pre.known) sc += a.pre.satWorked ? 60 : -60;
+            } else if (bk >= 0) {
               var b = blocks[bk], first = b[0] === i;
               if (!first) {
                 if (weWorked[p][bk]) sc += 20 - (g[p][b[0]] === s ? (s === 'C1' ? 15 : 6) : 0); else sc -= 8;
               } else {
                 sc += (a.weDesired - weCount[p]) * 10 + (weCount[p] >= a.weHi ? -25 : 0);
-                if (bk > 0 && weWorked[p][bk - 1]) sc -= 6;
+                var prevWe = bk > 0 ? (weWorked[p][bk - 1] || (blocks[bk - 1].cont && a.pre.satWorked)) : a.pre.lastWe;
+                if (prevWe) sc -= 6;
                 if (b.length > 1 && (a.lock[b[1]] || a.forbid[days[b[1]].dow])) sc -= 10;
               }
             }
@@ -372,7 +433,7 @@
           }
           if (bestP >= 0) {
             g[bestP][i] = s; assigned[bestP]++;
-            if (bk >= 0 && !weWorked[bestP][bk]) { weWorked[bestP][bk] = 1; weCount[bestP]++; }
+            if (bk >= 0 && !weWorked[bestP][bk]) { weWorked[bestP][bk] = 1; if (!blocks[bk].cont) weCount[bestP]++; }
           }
         });
       }
@@ -393,9 +454,10 @@
         if (days[i].we || days[i].hol) for (p = 0; p < N; p++) if (g[p][i] === 'D2' && !P[p].lock[i]) sc += 300;
       }
       for (p = 0; p < N; p++) {
-        var row = g[p], a = P[p], worked = 0, we = 0, prevBlock = false, cnt4 = { C1: 0, M5: 0, M1: 0, D2: 0 }, shiftDays = 0;
+        var row = g[p], a = P[p], pre = a.pre, worked = 0, we = 0, prevBlock = pre.lastWe, cnt4 = { C1: 0, M5: 0, M1: 0, D2: 0 }, shiftDays = 0;
         var isolatedOK = false;
-        var mr = a.maxRun, prevLen = -1, restLen = -1, segStart = 0, d2run = false, c1run = false;
+        var mr = a.maxRun, prevLen = pre.rest ? pre.lastRun || -1 : -1, restLen = pre.rest || -1, segStart = 0, d2run = !!pre.runHas.D2, c1run = !!pre.runHas.C1;
+        if (pre.lastC1 && !pre.light && isEarly(row[0]) && !a.lock[0]) sc += 100000;
         for (i = 0; i <= D; i++) {
           var w = i < D && isWork(row[i]);
           if (i < D) {
@@ -411,7 +473,8 @@
           // séries : on évalue chaque série de travail et chaque pause à leur fin
           var prevW = i > 0 && isWork(row[i - 1]);
           if (i === D || (i > 0 && w !== prevW)) {
-            var len = i - segStart, edge = segStart === 0 || i === D;
+            var len = i - segStart, edge = i === D || (segStart === 0 && !pre.known);
+            if (segStart === 0 && pre.known) len += prevW ? pre.run : pre.rest;
             if (i > 0 && prevW) {
               if (len > mr) sc += 200000 * (len - mr);
               else if (len === 1 && !edge && !isolatedOK) sc += row[segStart] === 'D2' ? 350 : 650;
@@ -451,6 +514,8 @@
         }
         if (a.rythme === 'lisse') sc += weekImbalance(a, row);
         for (i = 0; i < D; i++) if (!a.lock[i] && softMissed(a, i, row[i])) sc += 900;
+        // Mois finissant un samedi : laisser la place pour le dimanche du mois suivant
+        if (days[D - 1].dow === 6 && isWork(row[D - 1]) && restCheck(a, row.concat(['M5']), mr) >= 0) sc += 100000;
         var dev = worked - a.exp;
         sc += (fill && dev < 0 ? 110 : 40) * dev * dev;
         if (worked > a.maxDays) sc += 200 * (worked - a.maxDays);
@@ -458,10 +523,11 @@
           var b = blocks[k], cntB = 0;
           for (var j = 0; j < b.length; j++) if (isWork(row[b[j]])) cntB++;
           var on = cntB > 0;
+          if (b.cont) { if (pre.known && on !== pre.satWorked) sc += 100000; prevBlock = pre.known ? pre.satWorked : on; continue; }
           if (on) {
             we++;
             if (b.length === 2 && cntB === 1) sc += 100000;
-            if (prevBlock) sc += 120;
+            if (prevBlock) sc += a.wePlus ? 60 : 200;
             if (b.length === 2 && cntB === 2 && row[b[0]] === row[b[1]]) sc += row[b[0]] === 'C1' ? 400 : 90;
           }
           prevBlock = on;
@@ -497,6 +563,7 @@
       var row = g2[p];
       if (row[i] && isWork(row[i]) && P[p].forbid[days[i].dow] && !P[p].lock[i]) return false;
       if (row[i] && !P[p].lock[i] && hardBlocked(P[p], i, row[i])) return false;
+      if (i === 0 && P[p].pre.lastC1 && !P[p].pre.light && isEarly(row[0]) && !P[p].lock[0]) return false;
       return okPair(row, i);
     }
     var g2;
@@ -549,7 +616,7 @@
         var valid = true;
         for (var c = 0; c < changes.length && valid; c++) {
           var pp = changes[c][0], ii = changes[c][1];
-          if (!okCell(pp, ii) || !okPair(g[pp], ii - 1) || restViolation(g[pp], P[pp].maxRun) >= 0) valid = false;
+          if (!okCell(pp, ii) || !okPair(g[pp], ii - 1) || restCheck(P[pp], g[pp], P[pp].maxRun) >= 0) valid = false;
         }
         var ns = valid ? score(g) : Infinity;
         if (ns <= cur || (valid && rnd() < Math.exp((cur - ns) / T))) {
@@ -567,12 +634,13 @@
   function evaluate(opts) {
     var info = monthInfo(opts.year, opts.month, opts.holidays), rules = opts.rules || {};
     var D = info.D, days = info.days, maxC = rules.maxConsecutive || 5, hpd = rules.hpd || (8 + 25 / 60);
-    var all = buildState(opts.staff, info, opts.cells, opts.wishes);
+    var all = buildState(opts.staff, info, opts.cells, opts.wishes, opts.prev);
     weekendTargets(all.filter(function (a) { return a.s.role !== 'admin'; }), info);
     var issues = [], wishStats = { total: 0, missed: 0, cells: {} };
     var cover = days.map(function () { return {}; });
     var people = all.map(function (a) {
-      var worked = 0, c1 = 0, run = 0, we = 0, shifts = {}, d2seen = false, c1seen = false;
+      var pre = a.pre, worked = 0, c1 = 0, run = pre.run, we = 0, shifts = {}, d2seen = !!pre.runHas.D2, c1seen = !!pre.runHas.C1;
+      if (pre.lastC1 && !pre.light && isEarly(a.row[0])) issues.push({ lvl: 'err', d: 1, sid: a.s.id, txt: 'Horaire du matin après le C1 du dernier jour du mois précédent' });
       for (var i = 0; i < D; i++) {
         var c = a.row[i];
         if (c) cover[i][c] = (cover[i][c] || 0) + 1;
@@ -599,14 +667,16 @@
         if (c === 'C1') { c1++; if (badC1(days, a.row, i)) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'C1 suivi d’un horaire du matin' }); }
       }
       ['C1', 'D2'].forEach(function(sh) { for(var i=0;i<D;i++) { if(a.row[i]!==sh) continue; var count=a.row.slice(Math.max(0,i-6),i+1).filter(function(c){return c===sh;}).length; if(count>=3) issues.push({lvl:'warn',d:i+1,sid:a.s.id,txt:count+' '+sh+' sur 7 jours'}); } });
-      info.blocks.forEach(function (b) { var n = b.filter(function (i) { return isWork(a.row[i]); }).length; if (n) we++; if (b.length === 2 && n === 1) issues.push({ lvl: 'err', d: b[0] + 1, sid: a.s.id, txt: 'Week-end incomplet : samedi et dimanche indissociables' }); });
-      var violation = restViolation(a.row, Math.min(a.maxRun, maxC));
+      info.blocks.forEach(function (b) { var n = b.filter(function (i) { return isWork(a.row[i]); }).length;
+        if (b.cont) { if (pre.known && !!n !== pre.satWorked) issues.push({ lvl: 'err', d: 1, sid: a.s.id, txt: pre.satWorked ? 'Travaille le samedi (mois précédent) mais pas le dimanche 1' : 'Dimanche 1 travaillé sans le samedi du mois précédent' }); return; }
+        if (n) we++; if (b.length === 2 && n === 1) issues.push({ lvl: 'err', d: b[0] + 1, sid: a.s.id, txt: 'Week-end incomplet : samedi et dimanche indissociables' }); });
+      var violation = restCheck(a, a.row, Math.min(a.maxRun, maxC));
       if (violation >= 0) issues.push({lvl:'err',d:violation+1,sid:a.s.id,txt:'Repos obligatoire de deux jours ou durée maximale non respectés'});
       var dueH = (a.s.taux || 0) / 100 * info.workingDays * hpd;
       var doneH = (worked + a.credit) * hpd;
       var runs = [], len = 0;
       for (var j = 0; j <= D; j++) { if (j < D && isWork(a.row[j])) len++; else if (len) { runs.push(len); len = 0; } }
-      return { id: a.s.id, weLo: a.weLo, weHi: a.weHi, wePlus: a.wePlus, runs: runs, avgRun: runs.length ? worked / runs.length : 0, worked: worked, credit: a.credit, target: a.target, we: we, c1: c1, shifts: shifts, dueH: dueH, doneH: doneH, balance: doneH - dueH };
+      return { id: a.s.id, pre: pre.known ? { run: pre.run, rest: pre.rest, lastWe: pre.lastWe } : null, weLo: a.weLo, weHi: a.weHi, wePlus: a.wePlus, runs: runs, avgRun: runs.length ? worked / runs.length : 0, worked: worked, credit: a.credit, target: a.target, we: we, c1: c1, shifts: shifts, dueH: dueH, doneH: doneH, balance: doneH - dueH };
     });
     var weOff = 0;
     if (people.some(function (p) { return p.worked > 0; })) people.forEach(function (p) {
@@ -629,7 +699,7 @@
     return { info: info, people: people, weOff: weOff, wishes: wishStats, cover: cover, issues: issues, missing: missing, missingD2: missingD2 };
   }
 
-  var api = { restViolation: restViolation, SHIFTS: SHIFTS, isWork: isWork, isEarly: isEarly, monthInfo: monthInfo, holidaysDefault: holidaysDefault,
+  var api = { REGIONS: REGIONS.map(function (r) { return { id: r.id, nom: r.nom }; }), restViolation: restViolation, SHIFTS: SHIFTS, isWork: isWork, isEarly: isEarly, monthInfo: monthInfo, holidaysDefault: holidaysDefault,
     parseCell: parseCell, wishFor: wishFor, allows: allows, describeWish: describeWish, generate: generate, evaluate: evaluate, targetDays: targetDays };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Planner = api;

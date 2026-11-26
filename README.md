@@ -22,6 +22,36 @@ Application de démonstration, sans serveur ni base de données : les données s
 et un planning de janvier 2027. Pour repartir de zéro, effacer les données du site dans le navigateur ou modifier
 l'équipe dans « Équipe & règles ».
 
+## Fiches de l’équipe
+
+Dans « Équipe & règles », chaque personne a une fiche dépliable qui regroupe tous ses réglages : prénom, nom, taux,
+groupe, rôle, tutorat, week-ends par mois (automatique ou nombre imposé, volontaire pour plus), jours de travail
+d’affilée au maximum, rythme, repos fixes et désirs de chaque semaine, désirs ponctuels du mois et solde d’heures.
+« + Ajouter une personne » crée une fiche ; « Retirer cette personne » la supprime après confirmation.
+
+## Continuité d’un mois à l’autre
+
+- Le générateur lit la fin du mois précédent : une série en cours n’est pas prolongée au-delà du maximum, pas
+  d’horaire du matin après un C1 le dernier jour, la règle des repos continue, et un week-end commencé le samedi se
+  termine le dimanche avec les mêmes personnes. Un week-end compte pour le mois de son samedi.
+- Le dernier week-end du mois précédent compte dans l’alternance : celles qui l’ont travaillé évitent le premier.
+- Les trois derniers jours du mois précédent sont affichés en grisé au début de la grille.
+- Un mois qui finit un samedi laisse la place pour le dimanche suivant.
+
+## Solde d’heures reporté
+
+- Colonne « Mois » : solde du mois ; colonne « Cumul » : report au 1er + mois + correction = solde de fin de mois.
+- Fiche de la personne : « Solde de départ » et « Au début du mois de » pour reprendre le compteur existant lors de
+  la mise en route ; « Correction » pour ajuster un mois (heures payées, récupérées…). Le tout se reporte ensuite.
+- Règle « Rattraper le solde reporté » (2 jours par mois au plus par défaut) : avec des heures en plus, une personne
+  reçoit quelques jours de moins, et l’inverse.
+
+## Jours fériés
+
+Région au choix dans « Règles générales » : cantons du Jura, de Berne, Neuchâtel, Vaud, Genève, Fribourg, Valais,
+Soleure, Bâle, la France ou l’Alsace-Moselle. Les listes sont indicatives : chaque jour reste modifiable mois par mois,
+et « Rétablir » reprend la liste de la région.
+
 ## Désirs et rythme de travail
 
 - **Chaque semaine** (« Équipe & règles » → « Désirs et rythme de travail ») : pour chaque jour, exclure un ou plusieurs
@@ -51,7 +81,7 @@ l'équipe dans « Équipe & règles ».
   maximum de jours de suite par personne.
 - Répartition équitable des C1, M5, M1 et D2, des week-ends (selon le taux, en alternance) et des jours de travail.
 - Jours exclus respectés (par exemple : jamais le mercredi). Vacances comptées comme jours dus.
-- Jours fériés préremplis, modifiables mois par mois.
+- Jours fériés préremplis selon la région, modifiables mois par mois.
 
 ## Tests
 

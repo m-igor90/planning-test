@@ -156,22 +156,20 @@ table.grid { border-collapse: separate; border-spacing: 0; font-variant-numeric:
 
 /* Équipe & règles */
 .settings { display: grid; gap: 14px; }
-.staff-list { display: grid; gap: 8px; }
-.staff-row { display: grid; grid-template-columns: minmax(90px, 1.1fr) minmax(90px, 1.1fr) 64px 118px 128px auto 64px 64px 64px 36px; gap: 6px; align-items: center; padding-bottom: 8px; border-bottom: 1px solid var(--line-soft); }
-.staff-head { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; border-bottom: 0; padding-bottom: 0; }
-.staff-row input[type=text], .staff-row input[type=number], .staff-row select, .rules input { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 6px 7px; background: var(--bg); }
-.days7 { display: flex; gap: 2px; }
-.days7 button { width: 22px; height: 26px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); font-size: 11px; font-weight: 700; padding: 0; }
-.days7 button[aria-pressed="true"] { background: var(--err); color: #fff; border-color: var(--err); }
-.chk { display: flex; align-items: center; gap: 4px; font-size: 12px; }
-@media (max-width: 980px) {
-  .staff-head { display: none; }
-  .staff-row { grid-template-columns: 1fr 1fr; }
-  .staff-row > * { min-width: 0; }
-  .staff-row [data-lbl]::before { content: attr(data-lbl); display: block; font-size: 11px; color: var(--muted); }
-}
+.chk { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); gap: 10px 12px; align-items: end; }
+.fgrid label:not(.chk) { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); min-width: 0; }
+.fgrid .chk { min-height: 36px; }
+.fgrid input[type=text], .fgrid input[type=number], .fgrid select, .rules input, .rules select { width: 100%; min-width: 0; min-height: 36px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--bg); color: var(--ink); }
+.wmatrix button.rest-btn { color: var(--surface); font-family: var(--f-display); }
+.wmatrix button.rest-btn[aria-pressed="true"] { background: var(--err); border-color: var(--err); }
+.wmatrix button:disabled { color: var(--muted); opacity: .5; }
+.grid th.prevd, .grid td.prevd { opacity: .45; }
+.grid td.prevd .code { font-size: 12px; min-width: 0; padding: 2px; }
+.grid th.prevd { font-size: 10px; }
+.grid td.prevd.lastp, .grid th.prevd.lastp { border-right: 2px solid var(--line); }
 .rules { display: flex; flex-wrap: wrap; gap: 12px; }
-.rules label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); width: 190px; }
+.rules label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); width: min(100%, 230px); }
 .hol-days { display: flex; flex-wrap: wrap; gap: 4px; }
 .hol-days button { width: 34px; height: 30px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); font-size: 12px; font-weight: 600; padding: 0; }
 .hol-days button.we { color: var(--muted); }
@@ -236,7 +234,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow">Démo · V1.3.0 · Service de soins</span>
+      <span class="eyebrow">Démo · V1.4.0 · Service de soins</span>
       <h1>Planning infirmier <span class="planning-hearts" aria-hidden="true"><span>♥︎</span><span>♥︎</span><span>♥︎</span></span></h1>
     </div>
     <div class="month">
@@ -281,6 +279,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
       <h3>Codes et règles appliquées</h3>
       <div class="legend" id="legend"></div>
       <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Jamais deux D2 (horaires coupés) dans la même série de jours travaillés. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune, répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (par ex. jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
+      <p class="note"><strong>Continuité</strong> : le planning tient compte de la fin du mois précédent (trois derniers jours affichés en grisé) : série en cours, C1 de la veille, week-end commencé le samedi, alternance des week-ends. La colonne « Cumul » ajoute le solde reporté et les corrections au solde du mois. Si vous modifiez un mois déjà passé, régénérez le suivant si besoin.</p>
       <p class="note"><strong>Désirs</strong> : un désir « ferme » n’est jamais enfreint par le générateur ; un désir « souple » est respecté si possible. Un désir ponctuel remplace le désir de la semaine pour sa date. Dans la grille, violet plein = ponctuel, pointillé = chaque semaine. Week-ends répartis équitablement selon le taux (au moins un pour chacun) ; les volontaires en prennent davantage. Le rythme « lissé » ou « condensé » est une préférence : la couverture et les règles de repos passent avant.</p>
     </section>
   </div>
@@ -288,7 +287,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 <dialog class="wdlg" id="wishDlg" aria-labelledby="wishTitle"></dialog>
 <div class="toast" id="toast" hidden></div>
 
-<script src="planner.js?v=1.3.0"></script>
+<script src="planner.js?v=1.4.0"></script>
 <script>
 (function () {
   'use strict';
@@ -318,9 +317,9 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     y: 2027, m: 1,
     team: null,          // {staff:[], rules:{}}
     plan: null,          // {year, month, holidays, cells}
-    brush: 'X', settingsOpen: false, openWish: {}, dlg: null, canWrite: true, mode: 'loading', undo: []
+    brush: 'X', settingsOpen: false, openWish: {}, dlg: null, confirmDel: null, prevPlan: null, canWrite: true, mode: 'loading', undo: []
   };
-  var db = null, downloads = null, unsubPlan = null, timers = {}, pending = {}, writing = {};
+  var db = null, downloads = null, unsubPlan = null, unsubPrev = null, timers = {}, pending = {}, writing = {};
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -329,9 +328,11 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   function toast(t) { var el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { el.hidden = true; }, 2600); }
   function fmtH(h) { var s = h < 0 ? '−' : h > 0 ? '+' : ''; var a = Math.round(Math.abs(h) * 60); return s + Math.floor(a / 60) + 'h' + String(a % 60).padStart(2, '0'); }
   function displayName(s) { return ((s.prenom || '') + ' ' + (s.nom || '')).trim() || 'Sans nom'; }
-  function rules() { var r = (state.team && state.team.rules) || {}; return { hpd: r.hpd || (8 + 25 / 60), maxConsecutive: r.maxConsecutive || 5, tutoratMax: r.tutoratMax === undefined ? 2 : r.tutoratMax, fillHours: r.fillHours !== false, renfort: r.renfort || 'D2' }; }
+  function rules() { var r = (state.team && state.team.rules) || {}; return { hpd: r.hpd || (8 + 25 / 60), maxConsecutive: r.maxConsecutive || 5, tutoratMax: r.tutoratMax === undefined ? 2 : r.tutoratMax, fillHours: r.fillHours !== false, renfort: r.renfort || 'D2', rattrapage: r.rattrapage === undefined ? 2 : +r.rattrapage, region: r.region || 'CH-JU' }; }
   function staff() { return (state.team && state.team.staff) || []; }
-  function defaultPlan() { return { year: state.y, month: state.m, holidays: P.holidaysDefault(state.y, state.m), cells: {} }; }
+  function defaultPlan() { return { year: state.y, month: state.m, holidays: P.holidaysDefault(state.y, state.m, rules().region), cells: {} }; }
+  function shiftKey(k, n) { var y = +k.slice(0, 4), m = +k.slice(5, 7) + n; while (m < 1) { m += 12; y--; } while (m > 12) { m -= 12; y++; } return y + '-' + String(m).padStart(2, '0'); }
+  function hasCells(plan, sid) { var c = plan && plan.cells || {}; return sid ? !!(c[sid] && Object.keys(c[sid]).length) : Object.keys(c).some(function (k) { return Object.keys(c[k]).length; }); }
   function isoWeek(y, m, d) { var dt = new Date(Date.UTC(y, m - 1, d)); var day = dt.getUTCDay() || 7; dt.setUTCDate(dt.getUTCDate() + 4 - day); var y0 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1)); return Math.ceil(((dt - y0) / 86400000 + 1) / 7); }
 
   function setStatus(kind, txt) { var el = $('status'); el.className = 'status ' + kind; $('statusTxt').textContent = txt; }
@@ -343,6 +344,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 
   function save(what) {
     if (!state.canWrite) return;
+    if (what === 'plan' && state.plan && state.team) { var plans = allPlans(), rep = {}; staff().forEach(function (s) { var r = reportIn(s, key(), plans); if (r !== null) rep[s.id] = Math.round(r * 100) / 100; }); state.plan.report = rep; }
     if (state.mode === 'local') {
       var o = lsRead(); o.team = state.team; o.plans = o.plans || {}; o.plans[key()] = state.plan; lsWrite(o);
       return;
@@ -372,16 +374,19 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 
   function subscribePlan() {
     if (unsubPlan) { unsubPlan(); unsubPlan = null; }
-    state.plan = null; state.undo = []; closeWish();
+    if (unsubPrev) { unsubPrev(); unsubPrev = null; }
+    state.plan = null; state.prevPlan = null; state.undo = []; closeWish();
+    var pk = shiftKey(key(), -1);
     if (state.mode === 'local') {
-      var o = lsRead(); state.plan = (o.plans && o.plans[key()]) || defaultPlan(); render(); return;
+      var o = lsRead(); state.plan = (o.plans && o.plans[key()]) || defaultPlan(); state.prevPlan = (o.plans && o.plans[pk]) || null; render(); return;
     }
+    unsubPrev = db.doc('plannings/' + pk).onSnapshot(function (snap) { if (pk !== shiftKey(key(), -1)) return; state.prevPlan = snap.exists ? clone(snap.data()) : null; render(); }, function () {});
     var path = 'plannings/' + key(), k = key();
     unsubPlan = db.doc(path).onSnapshot(function (snap) {
       if (k !== key() || busy(path)) return;
       state.plan = snap.exists ? clone(snap.data()) : defaultPlan();
       if (!state.plan.cells) state.plan.cells = {};
-      if (!state.plan.holidays) state.plan.holidays = P.holidaysDefault(state.y, state.m);
+      if (!state.plan.holidays) state.plan.holidays = P.holidaysDefault(state.y, state.m, rules().region);
       render();
     }, function () { setStatus('off', 'Planning injoignable'); });
     render();
@@ -431,8 +436,55 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     subscribePlan();
   }
 
+  /* ---------- mois précédent et soldes reportés ---------- */
+  function prevForEngine() {
+    var p = state.prevPlan, k = shiftKey(key(), -1);
+    return hasCells(p) ? { year: +k.slice(0, 4), month: +k.slice(5, 7), holidays: p.holidays || [], cells: p.cells } : null;
+  }
+  function allPlans() {
+    var o = state.mode === 'local' ? (lsRead().plans || {}) : {};
+    if (state.prevPlan) o[shiftKey(key(), -1)] = state.prevPlan;
+    if (state.plan) o[key()] = state.plan;
+    return o;
+  }
+  var bilanMemo = {};
+  function bilan(k, plan) { // solde de chaque personne pour ce seul mois (heures)
+    var sig = JSON.stringify([plan.cells, plan.holidays, staff().map(function (s) { return [s.id, s.taux]; }), rules().hpd]);
+    if (bilanMemo[k] && bilanMemo[k].sig === sig) return bilanMemo[k].v;
+    var ev = P.evaluate({ staff: staff(), rules: rules(), year: +k.slice(0, 4), month: +k.slice(5, 7), holidays: plan.holidays || [], cells: plan.cells || {} }), v = {};
+    ev.people.forEach(function (p) { v[p.id] = hasCells(plan, p.id) ? p.balance : 0; });
+    bilanMemo[k] = { sig: sig, v: v };
+    return v;
+  }
+  /* Solde au 1er du mois k : solde de départ + soldes et corrections des mois précédents. null = pas encore suivi. */
+  function reportIn(s, k, plans) {
+    var start = s.soldeDebut || null, init = +s.soldeInitial || 0, acc = 0, m = shiftKey(k, -1);
+    if (start && k < start) return null;
+    for (var n = 0; n < 240; n++, m = shiftKey(m, -1)) {
+      if (start && m < start) return acc + init;
+      var pp = plans[m];
+      if (!pp) { if (start) continue; return acc + init; }
+      acc += (bilan(m, pp)[s.id] || 0) + (+((pp.adjust || {})[s.id]) || 0);
+      // en ligne (base partagée), seuls le mois affiché et le précédent sont chargés : reprendre le report enregistré
+      if (state.mode !== 'local' && !plans[shiftKey(m, -1)] && pp.report && pp.report[s.id] !== undefined) return acc + pp.report[s.id];
+    }
+    return acc + init;
+  }
+  function balanceOf(s, plans) {
+    plans = plans || allPlans();
+    var report = reportIn(s, key(), plans), month = state.plan && hasCells(state.plan, s.id) ? (bilan(key(), state.plan)[s.id] || 0) : 0;
+    var adj = +((state.plan && state.plan.adjust || {})[s.id]) || 0;
+    return { report: report, month: month, adj: adj, end: (report || 0) + month + adj };
+  }
+  function carryFor() { var plans = allPlans(), o = {}; staff().forEach(function (s) { var r = reportIn(s, key(), plans); o[s.id] = (r || 0) + (+((state.plan.adjust || {})[s.id]) || 0); }); return o; }
+  function cumulCell(s, plans) {
+    var b = balanceOf(s, plans);
+    if (b.report === null) return '<td class="sum"><span class="muted" title="Solde suivi à partir d’un mois suivant">—</span></td>';
+    return '<td class="sum" title="' + esc('Report au 1er : ' + fmtH(b.report) + ' · ce mois : ' + fmtH(b.month) + (b.adj ? ' · correction : ' + fmtH(b.adj) : '') + ' → fin du mois : ' + fmtH(b.end)) + '"><strong class="' + (b.end < -0.01 ? 'neg' : b.end > 0.01 ? 'pos' : '') + '">' + fmtH(b.end) + '</strong></td>';
+  }
+
   /* ---------- actions ---------- */
-  function pushUndo() { state.undo.push(clone({ cells: state.plan.cells, holidays: state.plan.holidays, wishes: state.plan.wishes || {} })); if (state.undo.length > 40) state.undo.shift(); }
+  function pushUndo() { state.undo.push(clone({ cells: state.plan.cells, holidays: state.plan.holidays, wishes: state.plan.wishes || {}, adjust: state.plan.adjust || {} })); if (state.undo.length > 40) state.undo.shift(); }
 
   function paint(sid, d) {
     if (!state.canWrite || !state.plan) return;
@@ -530,7 +582,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     setTimeout(function () {
       try {
         pushUndo();
-        var res = P.generate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, wishes: state.plan.wishes, seed: (Math.random() * 1e9) | 0 });
+        var res = P.generate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, wishes: state.plan.wishes, prev: prevForEngine(), carry: carryFor(), seed: (Math.random() * 1e9) | 0 });
         state.plan.cells = res.cells;
         save('plan');
         toast('Planning généré. Les cases fixées ont été gardées.');
@@ -551,19 +603,21 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 
   function undo() {
     var u = state.undo.pop(); if (!u) return;
-    state.plan.cells = u.cells; state.plan.holidays = u.holidays; state.plan.wishes = u.wishes; save('plan'); render();
+    state.plan.cells = u.cells; state.plan.holidays = u.holidays; state.plan.wishes = u.wishes; state.plan.adjust = u.adjust; save('plan'); render();
   }
 
   function csv() {
     var ev = evaluation(); var info = ev.info, lines = [];
     var head = ['Nom', 'Taux'];
     info.days.forEach(function (d) { head.push(DOW2[d.dow] + ' ' + d.d); });
-    head.push('Jours prévus', 'Jours dus', 'Week-ends', 'Solde (h)');
+    head.push('Jours prévus', 'Jours dus', 'Week-ends', 'Solde du mois (h)', 'Report au 1er (h)', 'Correction (h)', 'Fin de mois (h)');
+    var plans = allPlans(), num = function (x) { return x === null ? '' : (Math.round(x * 100) / 100).toString().replace('.', ','); };
     lines.push(head.join(';'));
     staff().forEach(function (s, i) {
       var row = [displayName(s), s.taux + '%'], cells = state.plan.cells[s.id] || {}, p = ev.people[i];
       info.days.forEach(function (d) { var v = P.parseCell(cells[d.d]).c; row.push(v === 'X' ? 'x' : v); });
-      row.push(p.worked + p.credit, p.target, p.we, (Math.round(p.balance * 100) / 100).toString().replace('.', ','));
+      var b = balanceOf(s, plans);
+      row.push(p.worked + p.credit, p.target, p.we, num(p.balance), num(b.report), num(b.adj), b.report === null ? '' : num(b.end));
       lines.push(row.map(function (c) { c = String(c); return /[;"\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';'));
     });
     return '﻿' + lines.join('\r\n');
@@ -608,7 +662,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   /* ---------- rendu ---------- */
   var evCache = null;
   function evaluation() {
-    evCache = P.evaluate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, wishes: state.plan.wishes });
+    evCache = P.evaluate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, wishes: state.plan.wishes, prev: prevForEngine() });
     return evCache;
   }
 
@@ -661,20 +715,24 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     var warnCells = {};
     ev.issues.forEach(function (it) { if (it.sid && it.lvl === 'err') errCells[it.sid + ':' + it.d] = 1; else if (it.sid && it.wish) warnCells[it.sid + ':' + it.d] = 1; });
     var colCls = info.days.map(function (d) { return d.hol ? 'hol' : d.we ? 'we' : ''; });
-    var h = '<table class="grid"><thead><tr class="wk"><th class="col-name"></th>';
+    var prev = prevForEngine(), pinfo = prev && P.monthInfo(prev.year, prev.month, prev.holidays), pdays = pinfo ? pinfo.days.slice(-3) : [];
+    var pcols = function (fn) { return pdays.map(function (d, j) { return fn(d, 'prevd' + (d.hol ? ' hol' : d.we ? ' we' : '') + (j === pdays.length - 1 ? ' lastp' : '')); }).join(''); };
+    var plans = allPlans();
+    var h = '<table class="grid"><thead><tr class="wk"><th class="col-name"></th>' + pcols(function (d, c) { return '<th class="' + c + '">' + (d === pdays[0] ? MONTHS[prev.month - 1].slice(0, 4) + '.' : '') + '</th>'; });
     info.days.forEach(function (d, i) { h += '<th class="' + colCls[i] + '">' + ((d.dow === 1 || i === 0) ? 'S' + isoWeek(state.y, state.m, d.d) : '') + '</th>'; });
-    h += '<th></th><th></th><th></th><th></th></tr><tr class="dn"><th class="col-name">Personne · taux</th>';
+    h += '<th></th><th></th><th></th><th></th><th></th></tr><tr class="dn"><th class="col-name">Personne · taux</th>' + pcols(function (d, c) { return '<th class="' + c + '" title="Fin du mois précédent">' + DOW2[d.dow] + '<span class="num">' + d.d + '</span></th>'; });
     info.days.forEach(function (d, i) { h += '<th class="' + colCls[i] + '" title="' + (d.hol ? 'Jour férié' : '') + '">' + DOW2[d.dow] + '<span class="num">' + d.d + '</span></th>'; });
-    h += '<th class="sum">Jours</th><th class="sum">WE</th><th class="sum">Solde</th><th class="sum" title="Nombre de C1, M5, M1 et D2">C1 · M5 · M1 · D2</th></tr></thead><tbody>';
+    h += '<th class="sum">Jours</th><th class="sum">WE</th><th class="sum" title="Solde d’heures de ce mois">Mois</th><th class="sum" title="Solde reporté + mois + correction">Cumul</th><th class="sum" title="Nombre de C1, M5, M1 et D2">C1 · M5 · M1 · D2</th></tr></thead><tbody>';
     var groups = [['tertiaire', 'Tertiaires'], ['secondaire', 'Secondaires']];
     var byId = {}; ev.people.forEach(function (p) { byId[p.id] = p; });
     groups.forEach(function (g) {
       var list = staff().filter(function (s) { return (s.groupe || 'tertiaire') === g[0]; });
       if (!list.length) return;
-      h += '<tr class="group"><th class="col-name">' + g[1] + '</th><th colspan="' + (info.D + 4) + '"></th></tr>';
+      h += '<tr class="group"><th class="col-name">' + g[1] + '</th><th colspan="' + (info.D + 5 + pdays.length) + '"></th></tr>';
       list.forEach(function (s) {
         var cells = state.plan.cells[s.id] || {}, p = byId[s.id];
-        h += '<tr><th class="col-name"><span class="name" title="' + esc(displayName(s)) + '">' + esc(displayName(s)) + '</span><span class="meta">' + esc(s.taux) + ' %' + (s.role === 'admin' ? ' · admin' : (s.rythme === 'lisse' ? ' · lissé' : s.rythme === 'condense' ? ' · condensé' : '') + (s.weekendsPlus && s.role !== 'admin' ? ' · WE+' : '')) + '</span></th>';
+        h += '<tr><th class="col-name"><span class="name" title="' + esc(displayName(s)) + '">' + esc(displayName(s)) + '</span><span class="meta">' + esc(s.taux) + ' %' + (s.role === 'admin' ? ' · admin' : (s.rythme === 'lisse' ? ' · lissé' : s.rythme === 'condense' ? ' · condensé' : '') + (s.weekendsPlus && s.role !== 'admin' ? ' · WE+' : '')) + '</span></th>' +
+          pcols(function (d, c) { var v = P.parseCell(((prev && prev.cells[s.id]) || {})[d.d]).c; return '<td class="c ' + c + '" aria-hidden="true">' + (v ? codeHtml(v) : '') + '</td>'; });
         info.days.forEach(function (d, i) {
           var pc = P.parseCell(cells[d.d]), inner;
           if (pc.c) inner = codeHtml(pc.c);
@@ -690,11 +748,11 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
         });
         var days = p.worked + p.credit;
         var runTip = p.runs.length ? 'Séries ce mois : ' + p.runs.join(' · ') + ' jours' : '';
-        h += '<td class="sum" title="' + esc('Jours travaillés + vacances / jours dus' + (runTip ? '. ' + runTip : '')) + '">' + days + ' / ' + p.target + '</td><td class="sum" title="' + esc(s.role === 'admin' || p.weLo === undefined ? '' : 'Week-ends : ' + p.we + ' (attendu ' + (p.weLo === p.weHi ? p.weLo : p.weLo + ' à ' + p.weHi) + ')' + (p.wePlus ? ' · volontaire' : '')) + '"><span class="' + (s.role !== 'admin' && p.weLo !== undefined && p.worked && (p.we < p.weLo || p.we > p.weHi) ? 'neg' : '') + '">' + p.we + '</span></td><td class="sum"><span class="' + (p.balance < -0.01 ? 'neg' : p.balance > 0.01 ? 'pos' : '') + '">' + fmtH(p.balance) + '</span></td><td class="sum mix">' + (s.role === 'admin' ? '<span class="muted">—</span>' : P.SHIFTS.map(function (k) { return '<b class="k-' + k + '">' + (p.shifts[k] || 0) + '</b>'; }).join(' · ')) + '</td></tr>';
+        h += '<td class="sum" title="' + esc('Jours travaillés + vacances / jours dus' + (runTip ? '. ' + runTip : '')) + '">' + days + ' / ' + p.target + '</td><td class="sum" title="' + esc(s.role === 'admin' || p.weLo === undefined ? '' : 'Week-ends : ' + p.we + ' (attendu ' + (p.weLo === p.weHi ? p.weLo : p.weLo + ' à ' + p.weHi) + ')' + (p.wePlus ? ' · volontaire' : '')) + '"><span class="' + (s.role !== 'admin' && p.weLo !== undefined && p.worked && (p.we < p.weLo || p.we > p.weHi) ? 'neg' : '') + '">' + p.we + '</span></td><td class="sum"><span class="' + (p.balance < -0.01 ? 'neg' : p.balance > 0.01 ? 'pos' : '') + '">' + fmtH(p.balance) + '</span></td>' + cumulCell(s, plans) + '<td class="sum mix">' + (s.role === 'admin' ? '<span class="muted">—</span>' : P.SHIFTS.map(function (k) { return '<b class="k-' + k + '">' + (p.shifts[k] || 0) + '</b>'; }).join(' · ')) + '</td></tr>';
       });
     });
     P.SHIFTS.forEach(function (s, si) {
-      h += '<tr class="cov' + (si === 0 ? ' first' : '') + '"><th class="col-name"><span class="meta">Couverture</span> ' + codeHtml(s) + '</th>';
+      h += '<tr class="cov' + (si === 0 ? ' first' : '') + '"><th class="col-name"><span class="meta">Couverture</span> ' + codeHtml(s) + '</th>' + pcols(function (d, c) { return '<td class="' + c + '"></td>'; });
       info.days.forEach(function (d, i) {
         var need = d.needs.indexOf(s) >= 0, n = ev.cover[i][s] || 0, v;
         if (!need) v = n ? '<span class="dup">' + n + '</span>' : '<span class="na">—</span>';
@@ -704,7 +762,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
         else v = '<span class="okm">✓</span>';
         h += '<td class="' + colCls[i] + '">' + v + '</td>';
       });
-      h += '<td></td><td></td><td></td><td></td></tr>';
+      h += '<td></td><td></td><td></td><td></td><td></td></tr>';
     });
     h += '</tbody></table>';
     var wrap = $('gridwrap'), sl = wrap.scrollLeft;
@@ -720,6 +778,8 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     var other = errs - ev.missing;
     if (other > 0) h += '<span class="pill err">' + other + ' règle(s) non respectée(s)</span>';
     var planned = ev.people.some(function (p) { return p.worked > 0; });
+    var pk = shiftKey(key(), -1), pm = MONTHS[+pk.slice(5, 7) - 1];
+    h += prevForEngine() ? '<span class="pill ok" title="Série en cours, week-end commencé le samedi et alternance des week-ends repris du mois précédent">Suite de ' + pm + '</span>' : '<span class="pill" title="Planifiez ' + pm + ' pour que ce mois en tienne compte">' + pm.charAt(0).toUpperCase() + pm.slice(1) + ' non planifié : pas de continuité</span>';
     if (planned) h += ev.weOff ? '<span class="pill warn">Week-ends : ' + ev.weOff + ' personne(s) hors de leur part</span>' : '<span class="pill ok">Week-ends répartis équitablement</span>';
     if (ev.wishes.total && planned) h += ev.wishes.missed ? '<span class="pill warn">Désirs : ' + ev.wishes.missed + ' non respecté(s) sur ' + ev.wishes.total + ' jour(s)</span>' : '<span class="pill ok">Désirs respectés : ' + ev.wishes.total + ' / ' + ev.wishes.total + '</span>';
     if (warns) h += '<span class="pill warn">' + warns + ' point(s) à surveiller</span>';
@@ -750,98 +810,127 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     el.hidden = !state.settingsOpen;
     $('settingsBtn').setAttribute('aria-expanded', String(state.settingsOpen));
     if (!state.settingsOpen || !state.team || !state.plan) return;
-    if (el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // ne pas perdre la saisie en cours
+    if (el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' && document.activeElement.type !== 'checkbox') return; // ne pas perdre la saisie en cours
     var focusId = el.contains(document.activeElement) ? document.activeElement.id : '';
     var ro = state.canWrite ? '' : ' disabled';
     var r = rules(), info = P.monthInfo(state.y, state.m, state.plan.holidays);
     var hh = Math.floor(r.hpd), mm = Math.round((r.hpd - hh) * 60);
-    var h = '<h3>Équipe</h3><div class="staff-list"><div class="staff-row staff-head"><span>Prénom</span><span>Nom</span><span>Taux %</span><span>Groupe</span><span>Rôle</span><span>Jours exclus</span><span>Tutorat</span><span>Week-ends</span><span>Max suite</span><span></span></div>';
-    staff().forEach(function (s, i) {
-      var ex = s.joursInterdits || [];
-      h += '<div class="staff-row" data-i="' + i + '">' +
-        '<label data-lbl="Prénom"><input type="text" id="st-' + esc(s.id) + '-prenom" data-f="prenom" value="' + esc(s.prenom) + '"' + ro + '></label>' +
-        '<label data-lbl="Nom"><input type="text" id="st-' + esc(s.id) + '-nom" data-f="nom" value="' + esc(s.nom) + '"' + ro + '></label>' +
-        '<label data-lbl="Taux %"><input type="number" id="st-' + esc(s.id) + '-taux" data-f="taux" min="10" max="100" step="5" value="' + esc(s.taux) + '"' + ro + '></label>' +
-        '<label data-lbl="Groupe"><select id="st-' + esc(s.id) + '-groupe" data-f="groupe"' + ro + '><option value="tertiaire"' + (s.groupe !== 'secondaire' ? ' selected' : '') + '>Tertiaire</option><option value="secondaire"' + (s.groupe === 'secondaire' ? ' selected' : '') + '>Secondaire</option></select></label>' +
-        '<label data-lbl="Rôle"><select id="st-' + esc(s.id) + '-role" data-f="role"' + ro + '><option value="soins"' + (s.role !== 'admin' ? ' selected' : '') + '>Soins</option><option value="admin"' + (s.role === 'admin' ? ' selected' : '') + '>Administratif (CS)</option></select></label>' +
-        '<div data-lbl="Jours exclus" class="days7-w"><div class="days7">' + [1, 2, 3, 4, 5, 6, 0].map(function (w) { return '<button type="button" data-w="' + w + '" aria-pressed="' + (ex.indexOf(w) >= 0) + '" title="Ne travaille pas le ' + ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][w] + '"' + ro + '>' + DOW1[w] + '</button>'; }).join('') + '</div></div>' +
-        '<label class="chk" data-lbl="Tutorat"><input type="checkbox" id="st-' + esc(s.id) + '-tut" data-f="tutorat"' + (s.tutorat ? ' checked' : '') + ro + '> T</label>' +
-        '<label data-lbl="Week-ends"><input type="text" id="st-' + esc(s.id) + '-we" data-f="weekends" placeholder="auto" value="' + esc(s.weekends == null ? '' : s.weekends) + '"' + ro + '></label>' +
-        '<label data-lbl="Max de suite"><input type="number" id="st-' + esc(s.id) + '-ms" data-f="maxSuite" min="1" max="7" placeholder="' + r.maxConsecutive + '" value="' + esc(s.maxSuite || '') + '"' + ro + '></label>' +
-        (state.canWrite ? '<button class="iconbtn" data-del="' + i + '" aria-label="Retirer ' + esc(displayName(s)) + '" title="Retirer">×</button>' : '<span></span>') +
-        '</div>';
-    });
+    var h = '<h3>Équipe</h3><p class="note">Touchez une personne pour voir et modifier tous ses réglages : identité, taux, week-ends, jours de repos, désirs, rythme et solde d’heures. Pour un besoin à une date précise, utilisez le bouton « Désir » au-dessus du planning.</p><div class="wcards">';
+    staff().forEach(function (s) { h += personCard(s, ro, r); });
+    if (!staff().length) h += '<p class="note">Aucune personne pour l’instant.</p>';
     h += '</div>';
-    if (state.canWrite) h += '<div><button class="btn" id="addStaff">Ajouter une personne</button></div>';
-    h += '<p class="note">« Max suite » : nombre maximal de jours de travail d’affilée pour cette personne (vide = règle générale). « Week-ends » vide = automatique et équitable (90–80 % : 2, 70–60 % : 1 à 2, 50 % : 1, ajusté au nombre de week-ends du mois, aux vacances et aux volontaires) ; un nombre saisi est imposé. Rôle « Administratif » : la personne reçoit des CS en semaine et ne compte pas dans les 4 horaires.</p>';
-    h += wishSettings(ro);
-    h += '<h3>Règles</h3><div class="rules">' +
+    if (state.canWrite) h += '<div><button class="btn" id="addStaff">+ Ajouter une personne</button></div>';
+    h += '<h3>Règles générales</h3><div class="rules">' +
       '<label>Heures par jour<input type="text" id="r-hpd" value="' + hh + ':' + String(mm).padStart(2, '0') + '"' + ro + '></label>' +
-      '<label>Jours de suite au maximum (règle générale)<input type="number" id="r-max" min="3" max="7" value="' + r.maxConsecutive + '"' + ro + '></label>' +
+      '<label>Jours de suite au maximum (toute l’équipe)<input type="number" id="r-max" min="3" max="7" value="' + r.maxConsecutive + '"' + ro + '></label>' +
       '<label>Tutorats (T) max par mois<input type="number" id="r-tut" min="0" max="10" value="' + r.tutoratMax + '"' + ro + '></label>' +
       '<label>Compléter les heures<select id="r-fill"' + ro + '><option value="1"' + (r.fillHours ? ' selected' : '') + '>Oui, avec un renfort en semaine</option><option value="0"' + (r.fillHours ? '' : ' selected') + '>Non, 4 horaires seulement</option></select></label>' +
-      '<label>Horaire de renfort<select id="r-renfort"' + ro + '>' + ['D2', 'M1', 'M5'].map(function (c) { return '<option' + (r.renfort === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
-      '<p class="note">Avec seulement 4 horaires par jour, le mois demande moins de journées que ce que l’équipe doit selon les taux. « Compléter les heures » ajoute, certains jours de semaine, une 5<sup>e</sup> personne en renfort (au plus une par jour) pour amener chacune à son temps dû. Les tutorats remplacent alors un renfort. Les vacances saisies réduisent automatiquement le nombre de renforts.</p>';
-    h += '<h3>Jours fériés — ' + MONTHS[state.m - 1] + ' ' + state.y + '</h3><p class="note">Un jour férié se planifie comme un week-end (C1, M5, M1, sans D2) et réduit le temps dû.</p><div class="hol-days">';
+      '<label>Horaire de renfort<select id="r-renfort"' + ro + '>' + ['D2', 'M1', 'M5'].map(function (c) { return '<option' + (r.renfort === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label>' +
+      '<label>Rattraper le solde reporté<select id="r-catch"' + ro + '>' + [[0, 'Non'], [1, 'Oui, 1 jour par mois au plus'], [2, 'Oui, 2 jours par mois au plus'], [3, 'Oui, 3 jours par mois au plus']].map(function (o) { return '<option value="' + o[0] + '"' + (r.rattrapage === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label></div>' +
+      '<p class="note">« Compléter les heures » ajoute certains jours de semaine une 5<sup>e</sup> personne en renfort (au plus une par jour) pour amener chacune à son temps dû ; les tutorats remplacent alors un renfort. « Rattraper le solde reporté » : une personne avec des heures en plus reçoit quelques jours de moins, et l’inverse, dans la limite choisie. Le planning suit le mois précédent : série en cours, week-end commencé le samedi, alternance des week-ends.</p>';
+    h += '<h3>Jours fériés</h3><div class="rules"><label style="width:min(100%,320px)">Région<select id="r-region"' + ro + '>' + P.REGIONS.map(function (x) { return '<option value="' + x.id + '"' + (r.region === x.id ? ' selected' : '') + '>' + esc(x.nom) + '</option>'; }).join('') + '</select></label></div>' +
+      '<p class="note">Listes indicatives des jours fériés légaux, à vérifier selon votre établissement. Un changement de région s’applique au mois affiché et aux mois pas encore créés. Touchez un jour pour l’ajouter ou le retirer ce mois-ci : un jour férié se planifie comme un week-end (C1, M5, M1, sans D2) et réduit le temps dû.</p>' +
+      '<div class="muted" style="font-size:12.5px;font-weight:600">' + MONTHS[state.m - 1] + ' ' + state.y + '</div><div class="hol-days">';
     info.days.forEach(function (d) { h += '<button type="button" data-hol="' + d.d + '" class="' + (d.we ? 'we' : '') + '" aria-pressed="' + d.hol + '"' + ro + '>' + d.d + '</button>'; });
-    h += '</div>';
+    h += '</div>' + (state.canWrite ? '<div><button class="btn" id="holReset">Rétablir les jours fériés de la région pour ce mois</button></div>' : '');
     h += '<h3>Sauvegarde</h3><p class="note">Exportez l’équipe et les plannings dans un fichier, pour les garder ou les reprendre dans une autre copie de l’application.</p><div class="toolbar"><button class="btn" id="exportJson">Exporter les données (JSON)</button>' +
       (state.canWrite ? '<label class="btn" for="importFile">Importer une sauvegarde…</label><input type="file" id="importFile" accept=".json,application/json" hidden>' : '') + '</div>';
     el.innerHTML = h;
     if (focusId && $(focusId)) $(focusId).focus({ preventScroll: true });
   }
 
-  function wishSettings(ro) {
-    var h = '<h3>Désirs, rythme et week-ends</h3><p class="note">Ouvrez une fiche pour noter les désirs qui reviennent chaque semaine, le rythme préféré et si la personne veut davantage de week-ends. Pour une date précise, utilisez le bouton « Désir » au-dessus du planning.</p><div class="wcards">';
-    var list = staff().filter(function (s) { return s.role !== 'admin'; });
-    list.forEach(function (s) {
-      var sid = esc(s.id), open = !!state.openWish[s.id], desirs = s.desirs || {};
-      var days = WEEK.filter(function (w) { return desirs[w] && desirs[w].non && desirs[w].non.length; });
-      var once = (state.plan.wishes || {})[s.id] || {}, onceDays = Object.keys(once).sort(function (a, b) { return a - b; });
-      var chips = '';
-      if (s.weekendsPlus) chips += '<span class="wchip">Volontaire WE +</span>';
-      if (s.rythme) chips += '<span class="wchip">' + (s.rythme === 'lisse' ? 'Lissé' : 'Condensé') + '</span>';
-      days.forEach(function (w) { chips += '<span class="wchip">' + DOW2[w] + ' : ' + P.describeWish(desirs[w].non) + '</span>'; });
-      if (onceDays.length) chips += '<span class="wchip">' + onceDays.length + ' ponctuel(s) en ' + MONTHS[state.m - 1] + '</span>';
-      h += '<div class="wcard" data-sid="' + sid + '"><button type="button" class="wcard-head" id="wh-' + sid + '" data-wopen aria-expanded="' + open + '"><strong>' + esc(displayName(s)) + '</strong>' + (chips || '<span class="muted" style="font-size:12px">Aucun désir</span>') + '<span class="chev">' + (open ? '▲' : '▼') + '</span></button>';
-      if (open) {
-        h += '<div class="wcard-body"><h4>Rythme préféré</h4><div class="seg">' + [['', 'Sans préférence'], ['lisse', 'Lissé'], ['condense', 'Condensé']].map(function (o) { return '<button type="button" id="wr-' + sid + '-' + o[0] + '" data-rythme="' + o[0] + '" aria-pressed="' + ((s.rythme || '') === o[0]) + '"' + ro + '>' + o[1] + '</button>'; }).join('') + '</div><div class="note">' + RHYTHM_TXT[s.rythme || ''] + '</div>';
-        h += '<h4>Week-ends</h4><div class="seg">' + [['', 'Comme l’équipe'], ['1', 'Volontaire pour plus']].map(function (o) { return '<button type="button" id="wwe-' + sid + '-' + (o[0] || 'n') + '" data-weplus="' + o[0] + '" aria-pressed="' + (!!s.weekendsPlus === !!o[0]) + '"' + ro + '>' + o[1] + '</button>'; }).join('') + '</div><div class="note">' + (s.weekends != null && s.weekends !== '' ? 'Un nombre fixe de week-ends (' + esc(s.weekends) + ') est saisi dans l’équipe : il est prioritaire sur ce choix.' : s.weekendsPlus ? 'Reçoit environ un week-end de plus que sa part ; les autres en font un peu moins, chacun gardant au moins un week-end.' : 'Part équitable selon le taux : en général 2 week-ends à 80–90 %, 1 à 2 à 60–70 %, 1 à 50 %, moins en cas de vacances.') + '</div>';
-        h += '<h4>Chaque semaine</h4><div class="note">Touchez une case pour exclure (✕) un horaire ce jour-là. « Ferme » = impératif, « Souple » = si possible.</div><table class="wmatrix"><thead><tr><th class="row"></th>' + WEEK.map(function (w) { return '<th>' + DOW2[w] + '</th>'; }).join('') + '</tr></thead><tbody>';
-        P.SHIFTS.forEach(function (c) {
-          h += '<tr><th class="row">' + c + '<small>' + SHIFT_SUB[c] + '</small></th>' + WEEK.map(function (w) {
-            var no = !!(desirs[w] && desirs[w].non && desirs[w].non.indexOf(c) >= 0);
-            return '<td><button type="button" id="wm-' + sid + '-' + w + '-' + c + '" data-wd="' + w + '" data-wc="' + c + '" aria-pressed="' + no + '" aria-label="' + DAYS[w] + ' ' + c + (no ? ' exclu' : ' possible') + '"' + ro + '>' + (no ? '✕' : '✓') + '</button></td>';
-          }).join('') + '</tr>';
-        });
-        if (days.length) h += '<tr><th class="row"><small>Niveau</small></th>' + WEEK.map(function (w) {
-          if (days.indexOf(w) < 0) return '<td></td>';
-          return '<td><button type="button" class="lvl" id="wl-' + sid + '-' + w + '" data-wlvl="' + w + '" aria-label="' + DAYS[w] + ' : désir ' + level(desirs[w]) + ', toucher pour changer"' + ro + '>' + (desirs[w].souple ? 'Souple' : 'Ferme') + '</button></td>';
+  function autoRun(s) { return Math.min(+s.taux === 90 ? 4 : 3, rules().maxConsecutive); }
+  function fmtIn(h) { return h ? fmtH(h).replace('+', '') .replace('−', '-') : ''; }
+
+  function personCard(s, ro, r) {
+    var sid = esc(s.id), open = !!state.openWish[s.id], soins = s.role !== 'admin', desirs = s.desirs || {}, ex = s.joursInterdits || [];
+    var days = WEEK.filter(function (w) { return desirs[w] && desirs[w].non && desirs[w].non.length && ex.indexOf(w) < 0; });
+    var once = (state.plan.wishes || {})[s.id] || {}, onceDays = Object.keys(once).sort(function (a, b) { return a - b; });
+    var fixedWe = s.weekends != null && s.weekends !== '';
+    var chips = '<span class="muted" style="font-size:12px">' + esc(s.taux) + ' % · ' + (soins ? (s.groupe === 'secondaire' ? 'secondaire' : 'tertiaire') : 'administratif') + '</span>';
+    if (ex.length) chips += '<span class="wchip">Repos : ' + WEEK.filter(function (w) { return ex.indexOf(w) >= 0; }).map(function (w) { return DOW2[w]; }).join(', ') + '</span>';
+    if (soins && s.weekendsPlus && !fixedWe) chips += '<span class="wchip">Volontaire WE +</span>';
+    if (fixedWe) chips += '<span class="wchip">' + esc(s.weekends) + ' WE imposé(s)</span>';
+    if (soins && s.rythme) chips += '<span class="wchip">' + (s.rythme === 'lisse' ? 'Lissé' : 'Condensé') + '</span>';
+    if (soins) days.forEach(function (w) { chips += '<span class="wchip">' + DOW2[w] + ' : ' + P.describeWish(desirs[w].non) + '</span>'; });
+    if (soins && onceDays.length) chips += '<span class="wchip">' + onceDays.length + ' désir(s) en ' + MONTHS[state.m - 1] + '</span>';
+    var h = '<div class="wcard" data-sid="' + sid + '"><button type="button" class="wcard-head" id="wh-' + sid + '" data-wopen aria-expanded="' + open + '"><strong>' + esc(displayName(s)) + '</strong>' + chips + '<span class="chev">' + (open ? '▲' : '▼') + '</span></button>';
+    if (!open) return h + '</div>';
+    var id = function (f) { return 'pf-' + sid + '-' + f; };
+    h += '<div class="wcard-body">';
+    // Identité
+    h += '<h4>Identité et poste</h4><div class="fgrid">' +
+      '<label>Prénom<input type="text" id="' + id('prenom') + '" data-f="prenom" value="' + esc(s.prenom) + '" autocomplete="off"' + ro + '></label>' +
+      '<label>Nom<input type="text" id="' + id('nom') + '" data-f="nom" value="' + esc(s.nom) + '" autocomplete="off"' + ro + '></label>' +
+      '<label>Taux d’activité (%)<input type="number" id="' + id('taux') + '" data-f="taux" min="10" max="100" step="5" value="' + esc(s.taux) + '"' + ro + '></label>' +
+      '<label>Groupe<select id="' + id('groupe') + '" data-f="groupe"' + ro + '><option value="tertiaire"' + (s.groupe !== 'secondaire' ? ' selected' : '') + '>Tertiaire</option><option value="secondaire"' + (s.groupe === 'secondaire' ? ' selected' : '') + '>Secondaire</option></select></label>' +
+      '<label>Rôle<select id="' + id('role') + '" data-f="role"' + ro + '><option value="soins"' + (soins ? ' selected' : '') + '>Soins (C1, M5, M1, D2)</option><option value="admin"' + (soins ? '' : ' selected') + '>Administratif (journées CS)</option></select></label>' +
+      (soins ? '<label class="chk"><input type="checkbox" id="' + id('tutorat') + '" data-f="tutorat"' + (s.tutorat ? ' checked' : '') + ro + '> Fait du tutorat (T)</label>' : '') + '</div>';
+    if (soins) {
+      // Organisation
+      var cap = autoRun(s), ms = +s.maxSuite > 0 ? Math.min(+s.maxSuite, cap) : 0, weOpts = [0, 1, 2, 3, 4];
+      if (fixedWe && weOpts.indexOf(+s.weekends) < 0) weOpts.push(+s.weekends);
+      h += '<h4>Organisation du travail</h4><div class="fgrid">' +
+        '<label>Week-ends travaillés par mois<select id="' + id('weekends') + '" data-f="weekends"' + ro + '><option value=""' + (fixedWe ? '' : ' selected') + '>Automatique — part équitable selon le taux</option>' + weOpts.map(function (n) { return '<option value="' + n + '"' + (fixedWe && +s.weekends === n ? ' selected' : '') + '>Toujours ' + n + ' week-end' + (n > 1 ? 's' : '') + '</option>'; }).join('') + '</select></label>' +
+        '<label>Jours de travail d’affilée au maximum<select id="' + id('maxSuite') + '" data-f="maxSuite"' + ro + '><option value=""' + (ms ? '' : ' selected') + '>Automatique — ' + cap + ' jours</option>' + [1, 2, 3, 4].filter(function (n) { return n < cap; }).map(function (n) { return '<option value="' + n + '"' + (ms === n ? ' selected' : '') + '>' + n + ' jour' + (n > 1 ? 's' : '') + ' au plus</option>'; }).join('') + '</select></label></div>';
+      h += '<div class="note">Automatique : 3 jours d’affilée au plus (4 à 90 %), dans la limite de la règle générale. ' + (fixedWe ? 'Un nombre de week-ends imposé remplace la répartition équitable.' : 'Part équitable : en général 2 week-ends à 80–90 %, 1 à 2 à 60–70 %, 1 à 50 %, moins en cas de vacances.') + '</div>';
+      h += '<div class="seg"' + (fixedWe ? ' hidden' : '') + '>' + [['', 'Week-ends comme l’équipe'], ['1', 'Volontaire pour plus']].map(function (o) { return '<button type="button" id="wwe-' + sid + '-' + (o[0] || 'n') + '" data-weplus="' + o[0] + '" aria-pressed="' + (!!s.weekendsPlus === !!o[0]) + '"' + ro + '>' + o[1] + '</button>'; }).join('') + '</div>';
+      h += '<div class="seg">' + [['', 'Sans préférence'], ['lisse', 'Lissé'], ['condense', 'Condensé']].map(function (o) { return '<button type="button" id="wr-' + sid + '-' + o[0] + '" data-rythme="' + o[0] + '" aria-pressed="' + ((s.rythme || '') === o[0]) + '"' + ro + '>' + o[1] + '</button>'; }).join('') + '</div><div class="note">' + RHYTHM_TXT[s.rythme || ''] + '</div>';
+    }
+    // Chaque semaine
+    h += '<h4>Chaque semaine</h4><div class="note">' + (soins ? '« Repos » : ne travaille jamais ce jour-là. Sinon, touchez un horaire pour l’exclure (✕) ; « Ferme » = impératif, « Souple » = si possible.' : '« Repos » : ne reçoit jamais de CS ce jour-là.') + '</div><table class="wmatrix"><thead><tr><th class="row"></th>' + WEEK.map(function (w) { return '<th>' + DOW2[w] + '</th>'; }).join('') + '</tr></thead><tbody>';
+    h += '<tr><th class="row">Repos<small>toujours</small></th>' + WEEK.map(function (w) { var on = ex.indexOf(w) >= 0; return '<td><button type="button" class="rest-btn" id="wx-' + sid + '-' + w + '" data-wrest="' + w + '" aria-pressed="' + on + '" aria-label="Repos tous les ' + DAYS[w] + 's' + (on ? ', activé' : '') + '"' + ro + '>' + (on ? 'R' : '') + '</button></td>'; }).join('') + '</tr>';
+    if (soins) {
+      P.SHIFTS.forEach(function (c) {
+        h += '<tr><th class="row">' + c + '<small>' + SHIFT_SUB[c] + '</small></th>' + WEEK.map(function (w) {
+          if (ex.indexOf(w) >= 0) return '<td><button type="button" disabled aria-label="' + DAYS[w] + ' : repos">—</button></td>';
+          var no = !!(desirs[w] && desirs[w].non && desirs[w].non.indexOf(c) >= 0);
+          return '<td><button type="button" id="wm-' + sid + '-' + w + '-' + c + '" data-wd="' + w + '" data-wc="' + c + '" aria-pressed="' + no + '" aria-label="' + DAYS[w] + ' ' + c + (no ? ' exclu' : ' possible') + '"' + ro + '>' + (no ? '✕' : '✓') + '</button></td>';
         }).join('') + '</tr>';
-        h += '</tbody></table>';
-        if (days.length) h += '<ul class="wlist">' + days.map(function (w) { return '<li><span>Le <strong>' + DAYS[w] + '</strong> : ' + P.describeWish(desirs[w].non) + ' <span class="muted">· ' + level(desirs[w]) + '</span></span></li>'; }).join('') + '</ul>';
-        if (onceDays.length) h += '<h4>Ponctuels — ' + MONTHS[state.m - 1] + ' ' + state.y + '</h4><ul class="wlist">' + onceDays.map(function (d) { var o = once[d]; return '<li><span>' + DAYS[dowOf(+d)] + ' ' + d + ' : ' + P.describeWish(o.non || []) + ((o.non || []).length ? ' <span class="muted">· ' + level(o) + '</span>' : '') + '</span>' + (state.canWrite ? '<span><button type="button" class="btn" data-pedit="' + esc(d) + '">Modifier</button></span>' : '') + '</li>'; }).join('') + '</ul>';
-        h += '</div>';
-      }
-      h += '</div>';
-    });
-    if (!list.length) h += '<p class="note">Aucune personne en soins pour l’instant.</p>';
-    return h + '</div>';
+      });
+      if (days.length) h += '<tr><th class="row"><small>Niveau</small></th>' + WEEK.map(function (w) {
+        if (days.indexOf(w) < 0) return '<td></td>';
+        return '<td><button type="button" class="lvl" id="wl-' + sid + '-' + w + '" data-wlvl="' + w + '" aria-label="' + DAYS[w] + ' : désir ' + level(desirs[w]) + ', toucher pour changer"' + ro + '>' + (desirs[w].souple ? 'Souple' : 'Ferme') + '</button></td>';
+      }).join('') + '</tr>';
+    }
+    h += '</tbody></table>';
+    if (soins && days.length) h += '<ul class="wlist">' + days.map(function (w) { return '<li><span>Le <strong>' + DAYS[w] + '</strong> : ' + P.describeWish(desirs[w].non) + ' <span class="muted">· ' + level(desirs[w]) + '</span></span></li>'; }).join('') + '</ul>';
+    if (soins && onceDays.length) h += '<h4>Désirs ponctuels — ' + MONTHS[state.m - 1] + ' ' + state.y + '</h4><ul class="wlist">' + onceDays.map(function (d) { var o = once[d]; return '<li><span>' + DAYS[dowOf(+d)] + ' ' + d + ' : ' + P.describeWish(o.non || []) + ((o.non || []).length ? ' <span class="muted">· ' + level(o) + '</span>' : '') + '</span>' + (state.canWrite ? '<span><button type="button" class="btn" data-pedit="' + esc(d) + '">Modifier</button></span>' : '') + '</li>'; }).join('') + '</ul>';
+    // Solde d'heures
+    var sb = balanceOf(s), monthsOpt = [];
+    for (var k = -24; k <= 12; k++) monthsOpt.push(shiftKey(key(), k));
+    if (s.soldeDebut && monthsOpt.indexOf(s.soldeDebut) < 0) monthsOpt.unshift(s.soldeDebut);
+    h += '<h4>Solde d’heures</h4><div class="fgrid">' +
+      '<label>Solde de départ (heures)<input type="text" inputmode="decimal" id="' + id('soldeInitial') + '" data-f="soldeInitial" placeholder="ex. 12:30 ou -4,5" value="' + esc(fmtIn(+s.soldeInitial || 0)) + '"' + ro + '></label>' +
+      '<label>Au début du mois de<select id="' + id('soldeDebut') + '" data-f="soldeDebut"' + ro + '><option value=""' + (s.soldeDebut ? '' : ' selected') + '>Premier mois planifié</option>' + monthsOpt.map(function (k) { return '<option value="' + k + '"' + (s.soldeDebut === k ? ' selected' : '') + '>' + MONTHS[+k.slice(5, 7) - 1] + ' ' + k.slice(0, 4) + '</option>'; }).join('') + '</select></label>' +
+      '<label>Correction en ' + MONTHS[state.m - 1] + ' (heures)<input type="text" inputmode="decimal" id="' + id('adjust') + '" data-adj placeholder="ex. -10 si heures payées" value="' + esc(fmtIn(sb.adj)) + '"' + ro + '></label></div>';
+    h += '<div class="wpreview">' + (sb.report === null ? 'Solde suivi à partir de ' + MONTHS[+s.soldeDebut.slice(5, 7) - 1] + ' ' + s.soldeDebut.slice(0, 4) + '.' :
+      'Report au 1<sup>er</sup> ' + MONTHS[state.m - 1] + ' : <strong>' + fmtH(sb.report) + '</strong> · ce mois : ' + fmtH(sb.month) + (sb.adj ? ' · correction : ' + fmtH(sb.adj) : '') + ' → fin du mois : <strong>' + fmtH(sb.end) + '</strong>') + '</div>';
+    h += '<div class="note">Le solde de départ reprend le compteur existant au moment de la mise en route. La correction ajuste un mois précis (heures payées, récupérées, erreur de pointage) et se reporte sur les mois suivants.</div>';
+    if (state.canWrite) h += state.confirmDel === s.id ? '<div class="confirm"><span>Retirer ' + esc(displayName(s)) + ' de l’équipe ?</span><button type="button" class="btn" data-delyes>Retirer</button><button type="button" class="btn" data-delno>Garder</button></div>' : '<div><button type="button" class="btn" data-del>Retirer cette personne</button></div>';
+    return h + '</div></div>';
   }
 
-  /* Clic dans une fiche « désirs » ; renvoie true s'il a été traité. */
-  function wishSettingsClick(t) {
+  /* Clic dans une fiche ; renvoie true s'il a été traité. */
+  function cardClick(t) {
     var card = t.closest('.wcard'); if (!card) return false;
     var s = person(card.dataset.sid); if (!s) return true;
-    if (t.hasAttribute('data-wopen')) { state.openWish[s.id] = !state.openWish[s.id]; renderSettings(); return true; }
+    if (t.hasAttribute('data-wopen')) { state.openWish[s.id] = !state.openWish[s.id]; state.confirmDel = null; renderSettings(); return true; }
     if (!state.canWrite) return true;
     if (t.dataset.pedit !== undefined) { openWish(s.id, +t.dataset.pedit); return true; }
+    if (t.hasAttribute('data-del')) { state.confirmDel = s.id; renderSettings(); return true; }
+    if (t.hasAttribute('data-delno')) { state.confirmDel = null; renderSettings(); return true; }
+    if (t.hasAttribute('data-delyes')) { state.confirmDel = null; state.team.staff.splice(state.team.staff.indexOf(s), 1); save('team'); render(); toast('Personne retirée'); return true; }
     var desirs = s.desirs || {};
     if (t.dataset.weplus !== undefined) { if (t.dataset.weplus) s.weekendsPlus = true; else delete s.weekendsPlus; }
     else if (t.dataset.rythme !== undefined) { if (t.dataset.rythme) s.rythme = t.dataset.rythme; else delete s.rythme; }
-    else if (t.dataset.wc) {
+    else if (t.dataset.wrest !== undefined) {
+      var w0 = +t.dataset.wrest, ex = (s.joursInterdits || []).slice(), k = ex.indexOf(w0);
+      if (k >= 0) ex.splice(k, 1); else ex.push(w0);
+      s.joursInterdits = ex;
+    } else if (t.dataset.wc) {
       var w = t.dataset.wd, c = t.dataset.wc, old = desirs[w] || { non: [], souple: false };
-      var had = old.non.indexOf(c) >= 0, non = P.SHIFTS.filter(function (k) { return k === c ? !had : old.non.indexOf(k) >= 0; });
+      var had = old.non.indexOf(c) >= 0, non = P.SHIFTS.filter(function (x) { return x === c ? !had : old.non.indexOf(x) >= 0; });
       if (non.length) desirs[w] = { non: non, souple: !!old.souple }; else delete desirs[w];
       s.desirs = desirs;
     } else if (t.dataset.wlvl !== undefined) { var x = desirs[t.dataset.wlvl]; if (x) x.souple = !x.souple; }
@@ -850,12 +939,38 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     return true;
   }
 
-  function staffEdit(i, f, v) {
-    var s = state.team.staff[i]; if (!s) return;
+  function cardChange(t) {
+    var card = t.closest('.wcard'); if (!card) return false;
+    var s = person(card.dataset.sid); if (!s || !state.canWrite) return true;
+    if (t.hasAttribute('data-adj')) {
+      var a = parseHours(t.value); if (a === null) { toast('Format attendu : 12:30 ou -4,5'); return true; }
+      pushUndo();
+      var adj = state.plan.adjust || (state.plan.adjust = {});
+      if (a) adj[s.id] = a; else delete adj[s.id];
+      save('plan'); render(); return true;
+    }
+    var f = t.dataset.f, v = t.type === 'checkbox' ? t.checked : t.value;
+    if (!f) return true;
     if (f === 'taux') v = Math.max(0, Math.min(100, +v || 0));
-    if (f === 'weekends') v = v === '' ? null : (isNaN(+v) ? null : +v);
-    if (f === 'maxSuite') v = +v > 0 ? Math.min(7, Math.round(+v)) : null;
-    s[f] = v; save('team'); render();
+    if (f === 'weekends') v = v === '' ? null : +v;
+    if (f === 'maxSuite') v = +v > 0 ? +v : null;
+    if (f === 'soldeInitial') { v = parseHours(v); if (v === null) { toast('Format attendu : 12:30 ou -4,5'); return true; } }
+    if (f === 'soldeDebut' && !v) v = null;
+    if (f === 'prenom' || f === 'nom') v = String(v).trim();
+    if (v === null || v === '') delete s[f]; else s[f] = v;
+    if (f === 'weekends' && v !== null) delete s.weekendsPlus;
+    save('team'); render(); return true;
+  }
+
+  /* « 12:30 », « -4,5 », « +3h15 », « 7 » → heures ; '' → 0 ; illisible → null */
+  function parseHours(txt) {
+    var t = String(txt || '').trim().replace(/\s/g, '').replace('−', '-');
+    if (!t) return 0;
+    var m = /^([+-]?)(\d{1,4})(?:[:h](\d{1,2})?)?$/.exec(t);
+    if (m) return (m[1] === '-' ? -1 : 1) * (+m[2] + (+(m[3] || 0)) / 60);
+    m = /^([+-]?)(\d{1,4})[.,](\d{1,2})$/.exec(t);
+    if (m) return (m[1] === '-' ? -1 : 1) * parseFloat(m[2] + '.' + m[3]);
+    return null;
   }
 
   /* ---------- événements ---------- */
@@ -878,38 +993,41 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 
   var st = $('settings');
   st.addEventListener('change', function (e) {
-    var t = e.target, row = t.closest('.staff-row');
-    if (row && t.dataset.f) { staffEdit(+row.dataset.i, t.dataset.f, t.type === 'checkbox' ? t.checked : t.value); return; }
-    if (t.id === 'r-hpd') { var m = /^(\d{1,2})(?:[:h](\d{1,2}))?$/.exec(t.value.trim()); if (m) { state.team.rules = state.team.rules || {}; state.team.rules.hpd = +m[1] + (+(m[2] || 0)) / 60; save('team'); render(); } else toast('Format attendu : 8:25'); }
-    if (t.id === 'r-max') { state.team.rules = state.team.rules || {}; state.team.rules.maxConsecutive = Math.max(3, Math.min(7, +t.value || 5)); save('team'); render(); }
+    var t = e.target;
     if (t.id === 'importFile' && t.files && t.files[0]) { importJson(t.files[0]); t.value = ''; return; }
-    if (t.id === 'r-fill') { state.team.rules = state.team.rules || {}; state.team.rules.fillHours = t.value === '1'; save('team'); render(); }
-    if (t.id === 'r-renfort') { state.team.rules = state.team.rules || {}; state.team.rules.renfort = t.value; save('team'); render(); }
-    if (t.id === 'r-tut') { state.team.rules = state.team.rules || {}; state.team.rules.tutoratMax = Math.max(0, +t.value || 0); save('team'); render(); }
+    if (cardChange(t)) return;
+    if (!state.canWrite) return;
+    var R = state.team.rules = state.team.rules || {};
+    if (t.id === 'r-hpd') { var m = /^(\d{1,2})(?:[:h](\d{1,2}))?$/.exec(t.value.trim()); if (m) R.hpd = +m[1] + (+(m[2] || 0)) / 60; else { toast('Format attendu : 8:25'); return; } }
+    else if (t.id === 'r-max') R.maxConsecutive = Math.max(3, Math.min(7, +t.value || 5));
+    else if (t.id === 'r-fill') R.fillHours = t.value === '1';
+    else if (t.id === 'r-renfort') R.renfort = t.value;
+    else if (t.id === 'r-tut') R.tutoratMax = Math.max(0, +t.value || 0);
+    else if (t.id === 'r-catch') R.rattrapage = +t.value;
+    else if (t.id === 'r-region') {
+      R.region = t.value; save('team');
+      pushUndo(); state.plan.holidays = P.holidaysDefault(state.y, state.m, R.region); save('plan'); render();
+      toast('Jours fériés de ' + MONTHS[state.m - 1] + ' mis à jour'); return;
+    } else return;
+    save('team'); render();
   });
   st.addEventListener('click', function (e) {
     var t = e.target.closest('button'); if (!t) return;
     if (t.id === 'exportJson') { exportJson(); return; }
-    if (wishSettingsClick(t)) return;
+    if (cardClick(t)) return;
     if (!state.canWrite) return;
-    if (t.dataset.w !== undefined) {
-      var row = t.closest('.staff-row'), s = state.team.staff[+row.dataset.i], w = +t.dataset.w, ex = (s.joursInterdits || []).slice(), k = ex.indexOf(w);
-      if (k >= 0) ex.splice(k, 1); else ex.push(w);
-      s.joursInterdits = ex; save('team'); render();
-    } else if (t.dataset.hol) {
+    if (t.dataset.hol) {
       var d = +t.dataset.hol, hs = (state.plan.holidays || []).slice(), j = hs.indexOf(d);
       pushUndo();
       if (j >= 0) hs.splice(j, 1); else hs.push(d);
       state.plan.holidays = hs.sort(function (a, b) { return a - b; }); save('plan'); render();
-    } else if (t.dataset.del !== undefined) {
-      var i = +t.dataset.del, s2 = state.team.staff[i], z = $('confirmZone');
-      z.innerHTML = '<div class="confirm"><span>Retirer ' + esc(displayName(s2)) + ' de l’équipe ?</span><button class="btn" id="cYes">Retirer</button><button class="btn" id="cNo">Garder</button></div>';
-      z.scrollIntoView({ block: 'nearest' });
-      $('cNo').onclick = function () { z.innerHTML = ''; };
-      $('cYes').onclick = function () { z.innerHTML = ''; state.team.staff.splice(state.team.staff.indexOf(s2), 1); save('team'); render(); };
+    } else if (t.id === 'holReset') {
+      pushUndo(); state.plan.holidays = P.holidaysDefault(state.y, state.m, rules().region); save('plan'); render(); toast('Jours fériés rétablis');
     } else if (t.id === 'addStaff') {
-      state.team.staff.push({ id: 'p' + Date.now().toString(36), prenom: '', nom: 'Nouvelle personne', groupe: 'tertiaire', taux: 80, role: 'soins', joursInterdits: [], tutorat: false, weekends: null });
+      var np = { id: 'p' + Date.now().toString(36), prenom: '', nom: '', groupe: 'tertiaire', taux: 80, role: 'soins', joursInterdits: [], tutorat: false, weekends: null };
+      state.team.staff.push(np); state.openWish[np.id] = true;
       save('team'); render();
+      var f = $('pf-' + np.id + '-prenom'); if (f) { f.scrollIntoView({ block: 'center' }); f.focus(); }
     }
   });
 
