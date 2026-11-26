@@ -55,6 +55,11 @@ button { cursor: pointer; }
 .brand { display: grid; gap: 2px; min-width: 0; }
 .brand .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
 .brand h1 { font-size: 28px; line-height: 1.05; }
+/* Cœurs décoratifs : hors grille et sans interaction. */
+.planning-hearts { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 6px; vertical-align: middle; white-space: nowrap; pointer-events: none; font-family: system-ui, sans-serif; font-size: 19px; line-height: 1; color: #db4b8a; }
+.planning-hearts span:first-child { color: #ec79ac; font-size: .7em; transform: rotate(-15deg); }
+.planning-hearts span:last-child { color: #ed8bb6; font-size: .75em; transform: rotate(15deg); }
+@media print { .planning-hearts { display: none; } }
 .month { display: flex; align-items: center; gap: 6px; }
 .month h2 { font-size: 24px; min-width: 9.5ch; text-align: center; text-transform: capitalize; }
 .iconbtn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
@@ -182,7 +187,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   <header class="top">
     <div class="brand">
       <span class="eyebrow">Démo · V1.1.6 · Service de soins</span>
-      <h1>Planning infirmier</h1>
+      <h1>Planning infirmier <span class="planning-hearts" aria-hidden="true"><span>♥︎</span><span>♥︎</span><span>♥︎</span></span></h1>
     </div>
     <div class="month">
       <button class="iconbtn" id="prev" aria-label="Mois précédent">‹</button>
