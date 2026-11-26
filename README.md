@@ -22,6 +22,20 @@ Application de démonstration, sans serveur ni base de données : les données s
 et un planning de janvier 2027. Pour repartir de zéro, effacer les données du site dans le navigateur ou modifier
 l'équipe dans « Équipe & règles ».
 
+## Désirs et rythme de travail
+
+- **Chaque semaine** (« Équipe & règles » → « Désirs et rythme de travail ») : pour chaque jour, exclure un ou plusieurs
+  horaires. Exemple : le mardi, pas de C1 (soir), le matin reste possible.
+- **Ponctuel** (bouton « Désir » au-dessus du planning, puis toucher une case) : un besoin pour une date précise, par
+  exemple « mardi 12, matin seulement ». Il remplace le désir de la semaine, et peut aussi le lever
+  (« Disponible pour tout »).
+- **Niveau** : « Ferme » n’est jamais enfreint par le générateur (un horaire peut alors rester non couvert, et l’alerte
+  l’explique) ; « Souple » est respecté si possible, la couverture passant avant.
+- **Rythme** : « Lissé » (surtout des séries de 2 jours, charge régulière) ou « Condensé » (séries plus longues, repos
+  plus longs). C’est une préférence : les règles de repos et de durée maximale restent prioritaires.
+- Une saisie fixée à la main reste prioritaire ; elle est signalée si elle contredit un désir.
+- Les désirs ne concernent pas le rôle administratif (CS). Tutorat, réunion et formation comptent comme du matin, la nuit comme du soir.
+
 ## Règles du générateur
 
 - Chaque jour : un C1 (soir), un M5 et un M1 ; en semaine en plus un D2. Pas de D2 le week-end ni les jours fériés.

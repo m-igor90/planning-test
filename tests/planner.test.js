@@ -35,3 +35,43 @@ test('janvier 2027 : couverture complète et règles dures respectées', () => {
   let run = 0;
   for (let d = 1; d <= 31; d++) { run = P.isWork(P.parseCell(res.cells.i[d]).c) ? run + 1 : 0; assert.ok(run <= 3, 'I : 3 jours de suite au maximum'); }
 });
+
+test('désirs : le ponctuel remplace l’hebdomadaire, le rôle administratif n’est pas concerné', () => {
+  const s = { id: 'a', role: 'soins', desirs: { 2: { non: ['C1'] } } };
+  assert.deepStrictEqual(P.wishFor(s, {}, 5, 2), { non: ['C1'], souple: false, ponctuel: false });
+  assert.deepStrictEqual(P.wishFor(s, { a: { 5: { non: [] } } }, 5, 2), { non: [], souple: false, ponctuel: true });
+  assert.strictEqual(P.wishFor(s, {}, 6, 3), null);
+  assert.strictEqual(P.wishFor({ ...s, role: 'admin' }, {}, 5, 2), null);
+  const matin = { non: ['C1', 'D2'] };
+  assert.strictEqual(P.describeWish(matin.non), 'matin seulement');
+  assert.deepStrictEqual(['M1', 'M5', 'T', 'C1', 'D2', 'N', ''].map(c => P.allows(matin, c)), [true, true, true, false, false, false, true]);
+});
+
+test('désirs fermes : jamais enfreints par le générateur', () => {
+  const team = staff.map(s => s.id === 'a' ? { ...s, desirs: { 2: { non: ['C1'] } } } : s.id === 'c' ? { ...s, rythme: 'condense' } : s.id === 'e' ? { ...s, rythme: 'lisse' } : s);
+  const wishes = { f: { 12: { non: ['C1', 'D2'] } }, g: { 14: { non: ['C1', 'M5', 'M1', 'D2'] } } };
+  const o = { staff: team, rules, year: 2027, month: 1, holidays: P.holidaysDefault(2027, 1), cells: {}, wishes };
+  for (const seed of [1, 2, 3]) {
+    const res = P.generate({ ...o, seed });
+    const ev = P.evaluate({ ...o, cells: res.cells });
+    assert.deepStrictEqual(Object.values(ev.wishes.cells).filter(k => k === 'hard'), [], 'tirage ' + seed);
+    for (const d of [5, 12, 19, 26]) assert.notStrictEqual(P.parseCell(res.cells.a[d]).c, 'C1');
+    assert.ok(['', 'M1', 'M5', 'T'].includes(P.parseCell(res.cells.f[12]).c));
+    assert.ok(!P.isWork(P.parseCell(res.cells.g[14]).c));
+  }
+});
+
+test('désirs : alertes selon le niveau et la saisie manuelle', () => {
+  const o = { staff, rules, year: 2027, month: 1, holidays: [], cells: { a: { 5: 'C1' }, c: { 5: '!C1' }, e: { 5: 'C1' } },
+    wishes: { a: { 5: { non: ['C1'] } }, c: { 5: { non: ['C1'] } }, e: { 5: { non: ['C1'], souple: true } } } };
+  const ev = P.evaluate(o);
+  assert.deepStrictEqual(ev.wishes.cells, { 'a:5': 'hard', 'c:5': 'lock', 'e:5': 'soft' });
+  assert.deepStrictEqual(ev.issues.filter(i => i.wish).map(i => i.lvl).sort(), ['err', 'warn', 'warn']);
+});
+
+test('désir impossible à couvrir : l’alerte en donne la raison', () => {
+  const team = staff.map(s => ({ ...s, desirs: { 2: { non: ['C1'] } } }));
+  const o = { staff: team, rules, year: 2027, month: 1, holidays: [], cells: {} };
+  const ev = P.evaluate({ ...o, cells: P.generate({ ...o, seed: 1 }).cells });
+  assert.ok(ev.issues.some(i => i.d === 5 && /^C1 non couvert — exclu par un désir ferme/.test(i.txt)));
+});

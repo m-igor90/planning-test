@@ -65,6 +65,49 @@
     return row[i] === 'C1' && i + 1 < row.length && isEarly(row[i + 1]) && !lightPair(days, i);
   }
 
+  /* ---------- désirs horaires ----------
+     Hebdomadaire : personne.desirs[jourDeSemaine 0-6] = { non: ['C1'], souple: false }
+     Ponctuel     : wishes[idPersonne][jourDuMois]     = { non: ['C1','D2'], souple: false }
+     Le ponctuel remplace l'hebdomadaire ; non: [] = « exceptionnellement disponible pour tout ».
+     Ferme (par défaut) : jamais enfreint par le générateur. Souple : respecté si possible. */
+  var RHYTHMS = { lisse: 1, condense: 1 };
+
+  function wishFor(s, wishes, d, dow) {
+    if (s.role === 'admin') return null;
+    var own = wishes && wishes[s.id] && wishes[s.id][d];
+    var w = own || (s.desirs && s.desirs[dow]);
+    if (!w) return null;
+    var non = SHIFTS.filter(function (c) { return (w.non || []).indexOf(c) >= 0; });
+    if (!own && !non.length) return null;
+    return { non: non, souple: !!w.souple && non.length > 0, ponctuel: !!own };
+  }
+
+  /* Le code est-il compatible avec le désir ? CS, T, R, F comptent comme du matin, N comme du soir. */
+  function allows(w, code) {
+    if (!w || !w.non.length || !isWork(code)) return true;
+    var no = function (c) { return w.non.indexOf(c) >= 0; };
+    if (w.non.length === SHIFTS.length) return false;
+    if (SHIFTS.indexOf(code) >= 0) return !no(code);
+    if (code === 'N') return !no('C1');
+    return !(no('M1') && no('M5'));
+  }
+
+  function describeWish(non) {
+    var ok = SHIFTS.filter(function (c) { return (non || []).indexOf(c) < 0; }), k = ok.join(',');
+    if (ok.length === 4) return 'disponible pour tout';
+    if (!ok.length) return 'repos souhaité';
+    if (k === 'M5,M1') return 'matin seulement';
+    if (k === 'C1') return 'soir seulement';
+    if (k === 'M5,M1,D2') return 'pas de soir';
+    if (k === 'C1,M5,M1') return 'pas de coupé';
+    if (k === 'C1,D2') return 'pas de matin';
+    return 'uniquement ' + ok.join(' ou ');
+  }
+
+  function hardBlocked(a, i, code) { var w = a.wish[i]; return !!w && !w.souple && !allows(w, code); }
+  function softMissed(a, i, code) { var w = a.wish[i]; return !!w && w.souple && !allows(w, code); }
+  function hardRest(a, i) { var w = a.wish[i]; return !!w && !w.souple && w.non.length === SHIFTS.length; }
+
   function parseCell(v) {
     if (!v) return { c: '', l: false };
     if (v.charAt(0) === '!') return { c: v.slice(1), l: true };
@@ -89,7 +132,7 @@
   }
 
   /* Prépare l'état commun à la génération et à l'évaluation. */
-  function buildState(staff, info, cells) {
+  function buildState(staff, info, cells, wishes) {
     var D = info.D;
     return staff.map(function (s) {
       var row = new Array(D).fill(''), lock = new Array(D).fill(false), src = (cells && cells[s.id]) || {};
@@ -101,7 +144,9 @@
       row.forEach(function (c, i) { if (c === 'V' && !info.days[i].we && !info.days[i].hol) credit++; });
       var forbid = {};
       (s.joursInterdits || []).forEach(function (w) { forbid[w] = 1; });
+      var wish = info.days.map(function (day) { return wishFor(s, wishes, day.d, day.dow); });
       return { s: s, row: row, lock: lock, credit: credit, target: targetDays(s, info), forbid: forbid,
+        wish: wish, rythme: RHYTHMS[s.rythme] ? s.rythme : '',
         maxRun: Math.min((s.id === 'r' || /^rachel$/i.test(s.prenom || '') || +s.taux !== 90) ? 3 : 4, +s.maxSuite > 0 ? +s.maxSuite : 4) };
     });
   }
@@ -128,7 +173,7 @@
     // Compléter les heures : un horaire de renfort en plus en semaine pour atteindre le taux de chacune
     var fill = !!rules.fillHours, RF = rules.renfort || 'D2';
     var seed = opts.seed || (Date.now() & 0x7fffffff);
-    var all = buildState(staff, info, opts.cells);
+    var all = buildState(staff, info, opts.cells, opts.wishes);
 
     // Garder uniquement les cases fixées
     all.forEach(function (a) { for (var i = 0; i < D; i++) if (!a.lock[i]) a.row[i] = ''; });
@@ -201,7 +246,7 @@
         // le tutorat remplace un horaire de renfort (jour où l'horaire est déjà couvert par une autre)
         var last = -9;
         for (var x = 0; x < D && have < tMax; x++) {
-          if (a.lock[x] || row[x] !== RF || days[x].we || days[x].hol || x - last < 5) continue;
+          if (a.lock[x] || !allows(a.wish[x], 'T') || row[x] !== RF || days[x].we || days[x].hol || x - last < 5) continue;
           var others = 0;
           for (var y = 0; y < N; y++) if (y !== p && best[y][x] === RF) others++;
           if (!others) continue;
@@ -210,7 +255,7 @@
       }
       var cands = [];
       for (var i = 0; i < D; i++) {
-        if (days[i].we || days[i].hol || a.lock[i] || row[i] || a.forbid[days[i].dow]) continue;
+        if (days[i].we || days[i].hol || a.lock[i] || row[i] || a.forbid[days[i].dow] || !allows(a.wish[i], 'T')) continue;
         if (i > 0 && row[i - 1] === 'C1') continue;
         var before = 0, after = 0, k;
         for (k = i - 1; k >= 0 && isWork(row[k]); k--) before++;
@@ -246,9 +291,9 @@
     function canTake(g, p, i, s) {
       var a = P[p];
       if (a.lock[i] || g[p][i]) return false;
-      if (a.forbid[days[i].dow]) return false;
+      if (a.forbid[days[i].dow] || hardBlocked(a, i, s)) return false;
       var block = blocks[blockOf[i]];
-      if (block && block.length === 2) { var other = block[0] === i ? block[1] : block[0]; if (a.forbid[days[other].dow] || (a.lock[other] && !isWork(g[p][other]))) return false; }
+      if (block && block.length === 2) { var other = block[0] === i ? block[1] : block[0]; if (a.forbid[days[other].dow] || (!a.lock[other] && hardRest(a, other)) || (a.lock[other] && !isWork(g[p][other]))) return false; }
       if (isEarly(s) && i > 0 && g[p][i - 1] === 'C1' && !lightPair(days, i - 1)) return false;
       if (s === 'C1' && i + 1 < D && isEarly(g[p][i + 1]) && !lightPair(days, i)) return false;
       if ((s === 'D2' || s === 'C1') && shiftInRun(g[p], i, s)) return false;
@@ -274,6 +319,9 @@
             if (run >= a.maxRun) continue;
             if (assigned[p] >= a.maxDays) sc -= 30;
             if (run === 1 || run === 2) sc += 1.2; else if (run >= 3) sc -= 1.5 * (run - 2);
+            if (softMissed(a, i, s)) sc -= 12;
+            if (a.rythme === 'condense' && (run === 1 || run === 2)) sc += 2;
+            if (a.rythme === 'lisse' && run >= 2) sc -= 2;
             if (run === 0 && i > 0 && runBefore(g[p], i - 1) === 0 && i > 1 && isWork(g[p][i - 2])) sc -= 0.5;
             if (bk >= 0) {
               var b = blocks[bk], first = b[0] === i;
@@ -336,6 +384,8 @@
               else if (len === 4) sc += 1800;
               else if (len === 5) sc += 400;
               else if (len >= 6) sc += 250;
+              if (a.rythme === 'lisse') sc += len === 1 && !edge ? 600 : len === 3 ? 450 : len >= 4 ? 1500 : 0;
+              else if (a.rythme === 'condense') sc += len === 2 ? 500 : len === 1 && !edge ? 500 : len === 4 ? -1500 : 0;
               if (restLen === 1 && prevLen >= 0) {
                 var around = prevLen + len;
                 sc += (prevLen >= 4 || len >= 4) ? 100000 : (around >= 6 ? 450 : around >= 4 ? 180 : isolatedOK ? 0 : 120);
@@ -344,6 +394,8 @@
             } else if (i > 0) {
               restLen = edge ? -1 : len;
               if (!edge && len >= 6) sc += 12 * (len - 5);
+              if (!edge && a.rythme === 'lisse' && len >= 4) sc += 350 * (len - 3);
+              if (!edge && a.rythme === 'condense') sc += len === 1 ? 700 : len === 2 ? 300 : 0;
             }
             segStart = i;
           }
@@ -362,6 +414,8 @@
           var windowWork = row.slice(start, start + 7).filter(isWork).length;
           if (windowWork >= 6) sc += 600 * (windowWork - 5);
         }
+        if (a.rythme === 'lisse') sc += weekImbalance(a, row);
+        for (i = 0; i < D; i++) if (!a.lock[i] && softMissed(a, i, row[i])) sc += 900;
         var dev = worked - a.exp;
         sc += (fill && dev < 0 ? 110 : 40) * dev * dev;
         if (worked > a.maxDays) sc += 200 * (worked - a.maxDays);
@@ -386,6 +440,18 @@
       return sc;
     }
 
+    /* Charge lissée : chaque semaine reçoit sa part, au prorata des jours où la personne est disponible. */
+    function weekImbalance(a, row) {
+      var weeks = [], cur = null, total = 0, done = 0;
+      for (var i = 0; i < D; i++) {
+        if (!cur || days[i].dow === 1) { cur = { free: 0, work: 0 }; weeks.push(cur); }
+        var work = isWork(row[i]), free = work || (!a.lock[i] && !a.forbid[days[i].dow] && !hardRest(a, i));
+        if (free) { cur.free++; total++; }
+        if (work) { cur.work++; done++; }
+      }
+      return weeks.reduce(function (sum, w) { var e = w.work - done * w.free / Math.max(1, total); return sum + 140 * e * e; }, 0);
+    }
+
     /* ---------- recuit simulé ---------- */
     function okPair(row, i) {
       // vérifie les contraintes dures autour de la case i
@@ -395,6 +461,7 @@
     function okCell(p, i) {
       var row = g2[p];
       if (row[i] && isWork(row[i]) && P[p].forbid[days[i].dow] && !P[p].lock[i]) return false;
+      if (row[i] && !P[p].lock[i] && hardBlocked(P[p], i, row[i])) return false;
       return okPair(row, i);
     }
     var g2;
@@ -465,8 +532,8 @@
   function evaluate(opts) {
     var info = monthInfo(opts.year, opts.month, opts.holidays), rules = opts.rules || {};
     var D = info.D, days = info.days, maxC = rules.maxConsecutive || 5, hpd = rules.hpd || (8 + 25 / 60);
-    var all = buildState(opts.staff, info, opts.cells);
-    var issues = [];
+    var all = buildState(opts.staff, info, opts.cells, opts.wishes);
+    var issues = [], wishStats = { total: 0, missed: 0, cells: {} };
     var cover = days.map(function () { return {}; });
     var people = all.map(function (a) {
       var worked = 0, c1 = 0, run = 0, we = 0, shifts = {}, d2seen = false, c1seen = false;
@@ -482,6 +549,17 @@
           if (run === mr + 1) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'plus de ' + mr + ' jours de suite' });
           if (a.forbid[days[i].dow]) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'travaille un jour exclu' });
         } else { run = 0; d2seen = false; c1seen = false; }
+        var w = a.wish[i];
+        if (w && w.non.length) {
+          wishStats.total++;
+          if (!allows(w, c)) {
+            wishStats.missed++;
+            var kind = a.lock[i] ? 'lock' : w.souple ? 'soft' : 'hard';
+            wishStats.cells[a.s.id + ':' + (i + 1)] = kind;
+            issues.push({ lvl: kind === 'hard' ? 'err' : 'warn', d: i + 1, sid: a.s.id, wish: true,
+              txt: c + ' contraire au désir ' + (w.souple ? 'souple' : 'ferme') + ' « ' + describeWish(w.non) + ' »' + (a.lock[i] ? ' (saisie fixée à la main)' : '') });
+          }
+        }
         if (c === 'C1') { c1++; if (badC1(days, a.row, i)) issues.push({ lvl: 'err', d: i + 1, sid: a.s.id, txt: 'C1 suivi d’un horaire du matin' }); }
       }
       ['C1', 'D2'].forEach(function(sh) { for(var i=0;i<D;i++) { if(a.row[i]!==sh) continue; var count=a.row.slice(Math.max(0,i-6),i+1).filter(function(c){return c===sh;}).length; if(count>=3) issues.push({lvl:'warn',d:i+1,sid:a.s.id,txt:count+' '+sh+' sur 7 jours'}); } });
@@ -490,7 +568,9 @@
       if (violation >= 0) issues.push({lvl:'err',d:violation+1,sid:a.s.id,txt:'Repos obligatoire de deux jours ou durée maximale non respectés'});
       var dueH = (a.s.taux || 0) / 100 * info.workingDays * hpd;
       var doneH = (worked + a.credit) * hpd;
-      return { id: a.s.id, worked: worked, credit: a.credit, target: a.target, we: we, c1: c1, shifts: shifts, dueH: dueH, doneH: doneH, balance: doneH - dueH };
+      var runs = [], len = 0;
+      for (var j = 0; j <= D; j++) { if (j < D && isWork(a.row[j])) len++; else if (len) { runs.push(len); len = 0; } }
+      return { id: a.s.id, runs: runs, avgRun: runs.length ? worked / runs.length : 0, worked: worked, credit: a.credit, target: a.target, we: we, c1: c1, shifts: shifts, dueH: dueH, doneH: doneH, balance: doneH - dueH };
     });
     var missing = 0, missingD2 = 0;
     days.forEach(function (dd, i) {
@@ -498,16 +578,17 @@
         var n = cover[i][s] || 0;
         if (!n) {
           if (s === 'D2') missingD2++; else missing++;
-          issues.push({ lvl: s === 'D2' ? 'info' : 'err', d: i + 1, txt: s + ' non couvert' });
+          var held = all.filter(function (a) { return a.s.role !== 'admin' && !isWork(a.row[i]) && hardBlocked(a, i, s); }).length;
+          issues.push({ lvl: s === 'D2' ? 'info' : 'err', d: i + 1, txt: s + ' non couvert' + (held ? ' — exclu par un désir ferme pour ' + held + ' personne' + (held > 1 ? 's' : '') : '') });
         } else if (n > 1 && !(rules.fillHours && s === (rules.renfort || 'D2') && n === 2 && !dd.we && !dd.hol)) issues.push({ lvl: 'warn', d: i + 1, txt: n + ' personnes en ' + s });
       });
     });
     issues.sort(function (x, y) { var o = { err: 0, warn: 1, info: 2 }; return o[x.lvl] - o[y.lvl] || x.d - y.d; });
-    return { info: info, people: people, cover: cover, issues: issues, missing: missing, missingD2: missingD2 };
+    return { info: info, people: people, wishes: wishStats, cover: cover, issues: issues, missing: missing, missingD2: missingD2 };
   }
 
   var api = { restViolation: restViolation, SHIFTS: SHIFTS, isWork: isWork, isEarly: isEarly, monthInfo: monthInfo, holidaysDefault: holidaysDefault,
-    parseCell: parseCell, generate: generate, evaluate: evaluate, targetDays: targetDays };
+    parseCell: parseCell, wishFor: wishFor, allows: allows, describeWish: describeWish, generate: generate, evaluate: evaluate, targetDays: targetDays };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Planner = api;
 })(typeof window !== 'undefined' ? window : this);

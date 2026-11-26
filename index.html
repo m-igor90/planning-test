@@ -19,7 +19,7 @@
   --ok: #2b7a3d; --warn: #a86500; --err: #c0392b; --err-soft: #fbe5e2;
   --c1: #4a46b0; --c1-bg: #ebeafc; --m1: #2d7a38; --m1-bg: #e4f3e6; --m5: #0b766e; --m5-bg: #dcf2ef;
   --d2: #946000; --d2-bg: #fbefd6; --cs: #2a78ba; --t: #2f97cf; --r: #55657a; --f: #8a5a3c; --n: #c0392b;
-  --palm: #2f8a4c; --sand: #f3e7c4;
+  --palm: #2f8a4c; --sand: #f3e7c4; --wish: #7a3e9d; --wish-bg: #f2e8f8; --warn-soft: #fcefd5;
   --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
   --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -30,7 +30,7 @@
   --ok: #6cc684; --warn: #e6a740; --err: #f07a6c; --err-soft: #3d1f1c;
   --c1: #a9a6ff; --c1-bg: #2a2950; --m1: #84d293; --m1-bg: #1d3524; --m5: #6fd6ca; --m5-bg: #173532;
   --d2: #f0c063; --d2-bg: #3a2f17; --cs: #4d9be0; --t: #4fb5e6; --r: #7c8ca1; --f: #b98461; --n: #e2594b;
-  --palm: #6cc684; --sand: #3b3420; color-scheme: dark; } }
+  --palm: #6cc684; --sand: #3b3420; --wish: #d3a6ee; --wish-bg: #36254a; --warn-soft: #3a2e15; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #11161c; --surface: #19202a; --ink: #e5eaf0; --muted: #94a2b2; --line: #2c3643; --line-soft: #232c37;
   --accent: #5fb4cc; --accent-ink: #0d1a20; --accent-soft: #1b3440;
@@ -38,7 +38,7 @@
   --ok: #6cc684; --warn: #e6a740; --err: #f07a6c; --err-soft: #3d1f1c;
   --c1: #a9a6ff; --c1-bg: #2a2950; --m1: #84d293; --m1-bg: #1d3524; --m5: #6fd6ca; --m5-bg: #173532;
   --d2: #f0c063; --d2-bg: #3a2f17; --cs: #4d9be0; --t: #4fb5e6; --r: #7c8ca1; --f: #b98461; --n: #e2594b;
-  --palm: #6cc684; --sand: #3b3420; color-scheme: dark; }
+  --palm: #6cc684; --sand: #3b3420; --wish: #d3a6ee; --wish-bg: #36254a; --warn-soft: #3a2e15; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -180,13 +180,63 @@ table.grid { border-collapse: separate; border-spacing: 0; font-variant-numeric:
 .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--err-soft); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
 textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); padding: 8px; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 20; }
+/* Désirs : repères dans la grille (violet ; plein = ponctuel, pointillé = chaque semaine) */
+.cell.flag-warn { background: var(--warn-soft); }
+.cell.wished::before { content: ""; position: absolute; left: 5px; right: 5px; bottom: 1px; border-bottom: 2px dotted var(--wish); }
+.cell.wished.once::before { border-bottom: 3px solid var(--wish); }
+.wtag { font-family: var(--f-display); font-weight: 600; font-size: 12px; line-height: 1; color: var(--wish); padding: 3px 1px; border-radius: 4px; white-space: nowrap; }
+.once .wtag { background: var(--wish-bg); font-weight: 700; min-width: 28px; }
+.soft .wtag { font-style: italic; }
+.wicon { display: inline-block; font-family: var(--f-display); font-weight: 700; font-size: 13px; color: var(--wish); background: var(--wish-bg); border-radius: 4px; padding: 2px 5px; line-height: 1.1; white-space: nowrap; }
+
+/* Désirs : réglages par collaborateur */
+.wcards { display: grid; gap: 8px; }
+.wcard { border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.wcard-head { width: 100%; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; text-align: left; background: transparent; border: 0; padding: 10px 12px; }
+.wcard-head strong { font-size: 14px; min-width: 5ch; }
+.wcard-head .chev { margin-left: auto; color: var(--muted); }
+.wchip { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 2px 8px; background: var(--wish-bg); color: var(--wish); }
+.wcard-body { display: grid; gap: 12px; padding: 4px 12px 12px; border-top: 1px solid var(--line-soft); }
+.wcard-body h4 { margin: 6px 0 0; font-size: 13px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; max-width: 420px; }
+.seg button { flex: 1; min-height: 38px; border: 0; background: var(--bg); font-size: 13px; font-weight: 600; padding: 4px 6px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.wmatrix { width: 100%; max-width: 520px; table-layout: fixed; border-collapse: separate; border-spacing: 3px; }
+.wmatrix th { font-size: 12px; color: var(--muted); font-weight: 600; padding: 0; }
+.wmatrix th.row { text-align: left; width: 48px; font-family: var(--f-display); font-size: 14px; line-height: 1.05; }
+.wmatrix th.row small { display: block; font-family: var(--f-body); font-size: 10px; font-weight: 500; }
+.wmatrix td { padding: 0; }
+.wmatrix button { width: 100%; height: 36px; padding: 0; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ok); font-weight: 700; }
+.wmatrix button[data-wc][aria-pressed="true"] { background: var(--wish); border-color: var(--wish); color: var(--surface); }
+.wmatrix button.lvl { height: 30px; overflow: hidden; font-family: var(--f-display); font-size: 12px; color: var(--wish); background: var(--wish-bg); border-color: transparent; }
+.wlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.wlist li { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+
+/* Désir ponctuel : fenêtre (feuille en bas d'écran sur téléphone) */
+.wdlg { width: min(440px, 100%); max-width: 100%; max-height: 92vh; overflow: auto; border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: var(--surface); color: var(--ink); }
+.wdlg[open] { display: grid; gap: 12px; }
+.wdlg::backdrop { background: rgba(10, 16, 24, .5); }
+@media (max-width: 600px) { .wdlg { width: 100%; margin: auto 0 0; border-radius: 16px 16px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); } }
+.wdlg h3 { font-size: 22px; }
+.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.presets button { min-height: 42px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-weight: 600; }
+.presets button[aria-pressed="true"] { background: var(--wish-bg); border-color: var(--wish); color: var(--wish); box-shadow: inset 0 0 0 1px var(--wish); }
+.shifts4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.shifts4 button { min-height: 52px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); display: grid; place-items: center; gap: 2px; padding: 4px; }
+.shifts4 button small { font-size: 11px; color: var(--muted); }
+.shifts4 button[aria-pressed="false"] { opacity: .55; border-style: dashed; }
+.shifts4 button[aria-pressed="false"] .code { text-decoration: line-through; }
+.wpreview { background: var(--wish-bg); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.wdlg .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.wdlg .actions .primary { flex: 1; justify-content: center; }
 @media (prefers-reduced-motion: no-preference) { .cell .code { transition: transform .12s; } .cell:hover .code { transform: scale(1.08); } }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow">Démo · V1.1.6 · Service de soins</span>
+      <span class="eyebrow">Démo · V1.2.0 · Service de soins</span>
       <h1>Planning infirmier <span class="planning-hearts" aria-hidden="true"><span>♥︎</span><span>♥︎</span><span>♥︎</span></span></h1>
     </div>
     <div class="month">
@@ -231,12 +281,14 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
       <h3>Codes et règles appliquées</h3>
       <div class="legend" id="legend"></div>
       <p class="note">Le générateur garde toutes les cases saisies à la main (petit coin coloré) et remplit le reste : chaque jour un C1, un M5 et un M1, plus un D2 en semaine (pas de D2 le week-end ni les jours fériés). Si « Compléter les heures » est activé, il ajoute en semaine un renfort (✓+1) pour que chacune atteigne son temps dû. Jamais deux D2 (horaires coupés) dans la même série de jours travaillés. Il privilégie des séries régulières de 2 à 3 jours (pas de 5 jours – 1 jour de congé – 5 jours, pas de jour isolé), respecte le maximum de jours de suite de chacune, répartit équitablement les C1, M5, M1 et D2 entre toutes, et fait tourner les horaires le week-end (par ex. M1→M5, M5→C1, C1→M1 : jamais deux C1 le même week-end). En semaine, jamais un horaire du matin après un C1. Jours exclus respectés (par ex. jamais le mercredi), week-ends répartis selon le taux en alternance, jours de travail au prorata du taux. Les vacances (palmier) comptent comme jours dus.</p>
+      <p class="note"><strong>Désirs</strong> : un désir « ferme » n’est jamais enfreint par le générateur ; un désir « souple » est respecté si possible. Un désir ponctuel remplace le désir de la semaine pour sa date. Dans la grille, violet plein = ponctuel, pointillé = chaque semaine. Le rythme « lissé » ou « condensé » est une préférence : la couverture et les règles de repos passent avant.</p>
     </section>
   </div>
 </div>
+<dialog class="wdlg" id="wishDlg" aria-labelledby="wishTitle"></dialog>
 <div class="toast" id="toast" hidden></div>
 
-<script src="planner.js?v=1.1.6"></script>
+<script src="planner.js?v=1.2.0"></script>
 <script>
 (function () {
   'use strict';
@@ -249,7 +301,16 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     CS: 'Journée administrative', T: 'Tutorat', R: 'Réunion', F: 'Formation', N: 'Nuit',
     V: 'Vacances', X: 'Désir de congé'
   };
-  var BRUSHES = [['C1','M5','M1','D2'], ['CS','T','R','F','N'], ['V','X'], ['pin','erase']];
+  var BRUSHES = [['C1','M5','M1','D2'], ['CS','T','R','F','N'], ['V','X','wish'], ['pin','erase']];
+  var DAYS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  var WEEK = [1, 2, 3, 4, 5, 6, 0];
+  var SHIFT_SUB = { C1: 'Soir', M5: 'Matin', M1: 'Matin', D2: 'Coupé' };
+  var PRESETS = [['Matin seulement', ['C1','D2']], ['Soir seulement', ['M5','M1','D2']], ['Pas de soir', ['C1']], ['Pas de coupé', ['D2']], ['Repos souhaité', ['C1','M5','M1','D2']], ['Disponible pour tout', []]];
+  var RHYTHM_TXT = {
+    '': 'Aucune préférence : le générateur applique ses règles habituelles.',
+    lisse: 'Lissé : surtout des séries de 2 jours, avec une charge régulière d’une semaine à l’autre.',
+    condense: 'Condensé : des séries plus longues (3 jours, dans la limite autorisée) pour obtenir des repos plus longs.'
+  };
   var PALM = '<svg width="20" height="18" viewBox="0 0 20 18" aria-hidden="true"><path d="M10 7 C9 11 9.6 14 9 17" stroke="var(--palm)" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M10 7 C7 3 3 4 1.5 6.5 C4 5.5 7 6 10 7 Z M10 7 C13 3 17 4 18.5 6.5 C16 5.5 13 6 10 7 Z M10 7 C9 3.5 11 1.5 13.5 1 C11.5 3 10.8 5 10 7 Z M10 7 C8 4 6 2.5 4 2.6 C6.5 4 8.5 5.5 10 7 Z" fill="var(--palm)"/></svg>';
   var CROSS = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3 L13 13 M13 3 L3 13" stroke="var(--err)" stroke-width="2.6" stroke-linecap="round"/></svg>';
 
@@ -257,7 +318,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     y: 2027, m: 1,
     team: null,          // {staff:[], rules:{}}
     plan: null,          // {year, month, holidays, cells}
-    brush: 'X', settingsOpen: false, canWrite: true, mode: 'loading', undo: []
+    brush: 'X', settingsOpen: false, openWish: {}, dlg: null, canWrite: true, mode: 'loading', undo: []
   };
   var db = null, downloads = null, unsubPlan = null, timers = {}, pending = {}, writing = {};
 
@@ -311,7 +372,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 
   function subscribePlan() {
     if (unsubPlan) { unsubPlan(); unsubPlan = null; }
-    state.plan = null; state.undo = [];
+    state.plan = null; state.undo = []; closeWish();
     if (state.mode === 'local') {
       var o = lsRead(); state.plan = (o.plans && o.plans[key()]) || defaultPlan(); render(); return;
     }
@@ -371,10 +432,13 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   }
 
   /* ---------- actions ---------- */
-  function pushUndo() { state.undo.push(clone({ cells: state.plan.cells, holidays: state.plan.holidays })); if (state.undo.length > 40) state.undo.shift(); }
+  function pushUndo() { state.undo.push(clone({ cells: state.plan.cells, holidays: state.plan.holidays, wishes: state.plan.wishes || {} })); if (state.undo.length > 40) state.undo.shift(); }
 
   function paint(sid, d) {
     if (!state.canWrite || !state.plan) return;
+    if (state.brush === 'wish') { openWish(sid, d); return; }
+    // Gomme sur une case déjà vide : retire le désir ponctuel
+    if (state.brush === 'erase' && !(state.plan.cells[sid] || {})[d] && ponctual(sid, d)) { setPonctual(sid, d, null); toast('Désir ponctuel retiré'); return; }
     var cells = state.plan.cells, row = cells[sid] || (cells[sid] = {}), cur = row[d] || '', b = state.brush;
     var next;
     if (b === 'erase') next = '';
@@ -384,6 +448,80 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     pushUndo();
     if (next) row[d] = next; else delete row[d];
     save('plan'); render();
+    var s = person(sid), w = s && next && wishOn(s, +d);
+    if (w && !P.allows(w, P.parseCell(next).c)) toast('Attention : contraire au désir « ' + P.describeWish(w.non) + ' »');
+  }
+
+  /* ---------- désirs ---------- */
+  function person(sid) { return staff().filter(function (s) { return s.id === sid; })[0]; }
+  function dowOf(d) { return new Date(state.y, state.m - 1, d).getDay(); }
+  function wishOn(s, d) { return P.wishFor(s, state.plan.wishes, d, dowOf(d)); }
+  function ponctual(sid, d) { return ((state.plan.wishes || {})[sid] || {})[d]; }
+  function level(w) { return w.souple ? 'souple' : 'ferme'; }
+  function shortWish(non) {
+    var ok = P.SHIFTS.filter(function (c) { return non.indexOf(c) < 0; }), k = ok.join(',');
+    if (ok.length === 4) return 'Tout';
+    if (!ok.length) return 'Rep';
+    if (k === 'M5,M1') return 'Mat';
+    if (k === 'C1') return 'Soir';
+    if (ok.length === 1) return ok[0];
+    if (non.length === 1) return '≠' + non[0];
+    return '≠' + non.length;
+  }
+  function setPonctual(sid, d, w) {
+    pushUndo();
+    var all = state.plan.wishes || (state.plan.wishes = {}), row = all[sid] || (all[sid] = {});
+    if (w) row[d] = w; else delete row[d];
+    if (!Object.keys(row).length) delete all[sid];
+    save('plan'); render();
+  }
+  function openWish(sid, d) {
+    var s = person(sid); if (!s) return;
+    if (s.role === 'admin') { toast('Les désirs horaires ne concernent pas le rôle administratif (CS)'); return; }
+    var w = wishOn(s, +d);
+    state.dlg = { sid: sid, d: +d, non: w ? w.non.slice() : [], souple: w ? w.souple : false };
+    renderWishDlg();
+    var el = $('wishDlg'); if (!el.open) el.showModal();
+  }
+  function renderWishDlg() {
+    var x = state.dlg, s = person(x.sid); if (!s) return;
+    var date = DAYS[dowOf(x.d)] + ' ' + x.d + ' ' + MONTHS[state.m - 1];
+    var weekly = P.wishFor(s, null, x.d, dowOf(x.d)), own = ponctual(x.sid, x.d);
+    var cur = P.parseCell((state.plan.cells[x.sid] || {})[x.d]);
+    var notes = [];
+    if (weekly) notes.push('Chaque ' + DAYS[dowOf(x.d)] + ' : ' + P.describeWish(weekly.non) + ' (' + level(weekly) + '). Le désir ponctuel le remplace pour cette date.');
+    if ((s.joursInterdits || []).indexOf(dowOf(x.d)) >= 0) notes.push('Ce jour est exclu dans les réglages : aucun horaire ne sera généré.');
+    if (cur.c === 'V' || cur.c === 'X') notes.push(cur.c === 'V' ? 'Cette case est en vacances.' : 'Un désir de congé (✕) est déjà posé sur cette case.');
+    if (!P.allows(x, cur.c)) notes.push(cur.l ? 'Le ' + cur.c + ' fixé à la main est contraire à ce désir : videz la case pour que le générateur le respecte.' : 'Le planning actuel place ' + cur.c + ' ce jour. Relancez « Générer » : les cases fixées sont gardées, le reste du mois est recalculé.');
+    var h = '<div><h3 id="wishTitle">' + esc(displayName(s)) + '</h3><div class="muted">Désir ponctuel · ' + date + '</div></div>';
+    h += '<div class="presets">' + PRESETS.map(function (p, i) { return '<button type="button" data-preset="' + i + '" aria-pressed="' + (p[1].join() === x.non.join()) + '">' + p[0] + '</button>'; }).join('') + '</div>';
+    h += '<div><div class="muted" style="font-size:12px;margin-bottom:4px">Horaires possibles ce jour-là (touchez pour changer)</div><div class="shifts4">' + P.SHIFTS.map(function (c) { var ok = x.non.indexOf(c) < 0; return '<button type="button" data-toggle="' + c + '" aria-pressed="' + ok + '" aria-label="' + c + (ok ? ' possible' : ' exclu') + '">' + codeHtml(c) + '<small>' + SHIFT_SUB[c] + '</small></button>'; }).join('') + '</div></div>';
+    if (x.non.length) h += '<div class="seg" role="group" aria-label="Niveau du désir"><button type="button" data-soft="0" aria-pressed="' + !x.souple + '">Ferme · impératif</button><button type="button" data-soft="1" aria-pressed="' + x.souple + '">Souple · si possible</button></div>';
+    h += '<div class="wpreview" aria-live="polite"><strong>' + esc(date.charAt(0).toUpperCase() + date.slice(1)) + ' : ' + P.describeWish(x.non) + '</strong>' + (x.non.length ? ' — ' + (x.souple ? 'respecté si possible' : 'le générateur ne l’enfreindra pas') : '') + '</div>';
+    if (notes.length) h += '<div class="note">' + notes.map(esc).join('<br>') + '</div>';
+    h += '<div class="actions"><button type="button" class="btn primary" data-act="ok">Enregistrer</button>' + (own ? '<button type="button" class="btn" data-act="del">Retirer</button>' : '') + '<button type="button" class="btn" data-act="cancel">Annuler</button></div>';
+    $('wishDlg').innerHTML = h;
+  }
+  function closeWish() { state.dlg = null; var el = $('wishDlg'); if (el.open) el.close(); }
+  function wishClick(e) {
+    if (e.target === $('wishDlg')) { var r = $('wishDlg').getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeWish(); return; }
+    var t = e.target.closest('button'), x = state.dlg; if (!t || !x) return;
+    var focus = null;
+    if (t.dataset.preset !== undefined) { x.non = PRESETS[+t.dataset.preset][1].slice(); focus = '[data-preset="' + t.dataset.preset + '"]'; }
+    else if (t.dataset.toggle) { var c = t.dataset.toggle, had = x.non.indexOf(c) >= 0; x.non = P.SHIFTS.filter(function (k) { return k === c ? !had : x.non.indexOf(k) >= 0; }); focus = '[data-toggle="' + c + '"]'; }
+    else if (t.dataset.soft !== undefined) { x.souple = t.dataset.soft === '1'; focus = '[data-soft="' + t.dataset.soft + '"]'; }
+    else if (t.dataset.act === 'cancel') { closeWish(); return; }
+    else if (t.dataset.act === 'del') { closeWish(); setPonctual(x.sid, x.d, null); toast('Désir ponctuel retiré'); return; }
+    else if (t.dataset.act === 'ok') {
+      var s = person(x.sid), weekly = P.wishFor(s, null, x.d, dowOf(x.d));
+      closeWish();
+      // « disponible pour tout » n'a de sens que pour lever un désir hebdomadaire
+      if (!x.non.length && !weekly) { if (ponctual(x.sid, x.d)) setPonctual(x.sid, x.d, null); toast('Aucune restriction : pas de désir enregistré'); return; }
+      setPonctual(x.sid, x.d, { non: x.non, souple: x.non.length ? x.souple : false }); toast('Désir enregistré');
+      return;
+    }
+    renderWishDlg();
+    if (focus) { var f = $('wishDlg').querySelector(focus); if (f) f.focus(); }
   }
 
   function generate() {
@@ -392,7 +530,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     setTimeout(function () {
       try {
         pushUndo();
-        var res = P.generate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, seed: (Math.random() * 1e9) | 0 });
+        var res = P.generate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, wishes: state.plan.wishes, seed: (Math.random() * 1e9) | 0 });
         state.plan.cells = res.cells;
         save('plan');
         toast('Planning généré. Les cases fixées ont été gardées.');
@@ -413,7 +551,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 
   function undo() {
     var u = state.undo.pop(); if (!u) return;
-    state.plan.cells = u.cells; state.plan.holidays = u.holidays; save('plan'); render();
+    state.plan.cells = u.cells; state.plan.holidays = u.holidays; state.plan.wishes = u.wishes; save('plan'); render();
   }
 
   function csv() {
@@ -470,7 +608,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   /* ---------- rendu ---------- */
   var evCache = null;
   function evaluation() {
-    evCache = P.evaluate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells });
+    evCache = P.evaluate({ staff: staff(), rules: rules(), year: state.y, month: state.m, holidays: state.plan.holidays, cells: state.plan.cells, wishes: state.plan.wishes });
     return evCache;
   }
 
@@ -484,11 +622,12 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
         var inner, title;
         if (b === 'pin') { inner = '<small>Fixer</small>'; title = 'Fixer / libérer un horaire généré'; }
         else if (b === 'erase') { inner = '<small>Effacer</small>'; title = 'Vider la case'; }
+        else if (b === 'wish') { inner = '<span class="wicon">Désir</span>'; title = 'Désir ponctuel : matin seulement, pas de soir…'; }
         else { inner = codeHtml(b); title = b + ' — ' + CODES[b]; }
         h += '<button class="brush" data-brush="' + b + '" aria-pressed="' + (state.brush === b) + '" title="' + esc(title) + '">' + inner + '</button>';
       });
     });
-    h += '<span class="hint">Touchez une case pour y poser le code choisi.</span>';
+    h += '<span class="hint">' + (state.brush === 'wish' ? 'Touchez une case pour indiquer un besoin à cette date.' : 'Touchez une case pour y poser le code choisi.') + '</span>';
     el.innerHTML = h;
   }
 
@@ -519,7 +658,8 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
 
   function renderGrid(ev, info) {
     var errCells = {};
-    ev.issues.forEach(function (it) { if (it.sid && it.lvl === 'err') errCells[it.sid + ':' + it.d] = 1; });
+    var warnCells = {};
+    ev.issues.forEach(function (it) { if (it.sid && it.lvl === 'err') errCells[it.sid + ':' + it.d] = 1; else if (it.sid && it.wish) warnCells[it.sid + ':' + it.d] = 1; });
     var colCls = info.days.map(function (d) { return d.hol ? 'hol' : d.we ? 'we' : ''; });
     var h = '<table class="grid"><thead><tr class="wk"><th class="col-name"></th>';
     info.days.forEach(function (d, i) { h += '<th class="' + colCls[i] + '">' + ((d.dow === 1 || i === 0) ? 'S' + isoWeek(state.y, state.m, d.d) : '') + '</th>'; });
@@ -534,16 +674,23 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
       h += '<tr class="group"><th class="col-name">' + g[1] + '</th><th colspan="' + (info.D + 4) + '"></th></tr>';
       list.forEach(function (s) {
         var cells = state.plan.cells[s.id] || {}, p = byId[s.id];
-        h += '<tr><th class="col-name"><span class="name" title="' + esc(displayName(s)) + '">' + esc(displayName(s)) + '</span><span class="meta">' + esc(s.taux) + ' %' + (s.role === 'admin' ? ' · admin' : '') + '</span></th>';
+        h += '<tr><th class="col-name"><span class="name" title="' + esc(displayName(s)) + '">' + esc(displayName(s)) + '</span><span class="meta">' + esc(s.taux) + ' %' + (s.role === 'admin' ? ' · admin' : s.rythme === 'lisse' ? ' · lissé' : s.rythme === 'condense' ? ' · condensé' : '') + '</span></th>';
         info.days.forEach(function (d, i) {
           var pc = P.parseCell(cells[d.d]), inner;
           if (pc.c) inner = codeHtml(pc.c);
           else inner = s.role === 'admin' ? '' : '<span class="rest">·</span>';
-          var cls = 'cell' + (pc.l ? ' locked' : '') + (errCells[s.id + ':' + d.d] ? ' flag' : '');
-          h += '<td class="c ' + colCls[i] + '"><button class="' + cls + '" data-sid="' + esc(s.id) + '" data-d="' + d.d + '"' + (state.canWrite ? '' : ' disabled') + ' aria-label="' + esc(displayName(s)) + ', ' + d.d + ' : ' + esc(pc.c ? (pc.c + ' ' + (CODES[pc.c] || '')) : 'repos') + '">' + inner + '</button></td>';
+          var w = wishOn(s, d.d), tip = '';
+          if (w) {
+            tip = (w.ponctuel ? 'Désir ponctuel : ' : 'Désir chaque ' + DAYS[d.dow] + ' : ') + P.describeWish(w.non) + (w.non.length ? ' (' + level(w) + ')' : '');
+            if (!pc.c) inner = '<span class="wtag">' + shortWish(w.non) + '</span>';
+          }
+          var id = s.id + ':' + d.d;
+          var cls = 'cell' + (pc.l ? ' locked' : '') + (errCells[id] ? ' flag' : warnCells[id] ? ' flag-warn' : '') + (w ? ' wished' + (w.ponctuel ? ' once' : '') + (w.souple ? ' soft' : '') : '');
+          h += '<td class="c ' + colCls[i] + '"><button class="' + cls + '" data-sid="' + esc(s.id) + '" data-d="' + d.d + '"' + (state.canWrite ? '' : ' disabled') + (tip ? ' title="' + esc(tip) + '"' : '') + ' aria-label="' + esc(displayName(s)) + ', ' + d.d + ' : ' + esc(pc.c ? (pc.c + ' ' + (CODES[pc.c] || '')) : 'repos') + (tip ? '. ' + esc(tip) : '') + '">' + inner + '</button></td>';
         });
         var days = p.worked + p.credit;
-        h += '<td class="sum" title="Jours travaillés + vacances / jours dus">' + days + ' / ' + p.target + '</td><td class="sum">' + p.we + '</td><td class="sum"><span class="' + (p.balance < -0.01 ? 'neg' : p.balance > 0.01 ? 'pos' : '') + '">' + fmtH(p.balance) + '</span></td><td class="sum mix">' + (s.role === 'admin' ? '<span class="muted">—</span>' : P.SHIFTS.map(function (k) { return '<b class="k-' + k + '">' + (p.shifts[k] || 0) + '</b>'; }).join(' · ')) + '</td></tr>';
+        var runTip = p.runs.length ? 'Séries ce mois : ' + p.runs.join(' · ') + ' jours' : '';
+        h += '<td class="sum" title="' + esc('Jours travaillés + vacances / jours dus' + (runTip ? '. ' + runTip : '')) + '">' + days + ' / ' + p.target + '</td><td class="sum">' + p.we + '</td><td class="sum"><span class="' + (p.balance < -0.01 ? 'neg' : p.balance > 0.01 ? 'pos' : '') + '">' + fmtH(p.balance) + '</span></td><td class="sum mix">' + (s.role === 'admin' ? '<span class="muted">—</span>' : P.SHIFTS.map(function (k) { return '<b class="k-' + k + '">' + (p.shifts[k] || 0) + '</b>'; }).join(' · ')) + '</td></tr>';
       });
     });
     P.SHIFTS.forEach(function (s, si) {
@@ -572,6 +719,8 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     h += ev.missingD2 ? '<span class="pill warn">' + ev.missingD2 + ' D2 non placé(s)</span>' : '<span class="pill ok">D2 placés tous les jours de semaine</span>';
     var other = errs - ev.missing;
     if (other > 0) h += '<span class="pill err">' + other + ' règle(s) non respectée(s)</span>';
+    var planned = ev.people.some(function (p) { return p.worked > 0; });
+    if (ev.wishes.total && planned) h += ev.wishes.missed ? '<span class="pill warn">Désirs : ' + ev.wishes.missed + ' non respecté(s) sur ' + ev.wishes.total + ' jour(s)</span>' : '<span class="pill ok">Désirs respectés : ' + ev.wishes.total + ' / ' + ev.wishes.total + '</span>';
     if (warns) h += '<span class="pill warn">' + warns + ' point(s) à surveiller</span>';
     h += '<span class="pill">' + info.workingDays + ' jours ouvrables · 100 % = ' + fmtH(info.workingDays * rules().hpd).replace('+', '') + '</span>';
     $('summary').innerHTML = h;
@@ -589,7 +738,9 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   function renderLegend() {
     var el = $('legend'); if (el.dataset.done) return; el.dataset.done = 1;
     el.innerHTML = Object.keys(CODES).map(function (c) { return '<div>' + codeHtml(c) + '<span>' + esc(CODES[c]) + '</span></div>'; }).join('') +
-      '<div><span class="rest" style="min-width:28px;text-align:center">·</span><span>Repos</span></div>';
+      '<div><span class="rest" style="min-width:28px;text-align:center">·</span><span>Repos</span></div>' +
+      '<div><span class="wicon">Mat</span><span>Désir : matin seulement</span></div>' +
+      '<div><span class="wicon">≠C1</span><span>Désir : pas de C1 (soir)</span></div>';
   }
 
   /* ---------- équipe & règles ---------- */
@@ -599,6 +750,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     $('settingsBtn').setAttribute('aria-expanded', String(state.settingsOpen));
     if (!state.settingsOpen || !state.team || !state.plan) return;
     if (el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // ne pas perdre la saisie en cours
+    var focusId = el.contains(document.activeElement) ? document.activeElement.id : '';
     var ro = state.canWrite ? '' : ' disabled';
     var r = rules(), info = P.monthInfo(state.y, state.m, state.plan.holidays);
     var hh = Math.floor(r.hpd), mm = Math.round((r.hpd - hh) * 60);
@@ -621,6 +773,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     h += '</div>';
     if (state.canWrite) h += '<div><button class="btn" id="addStaff">Ajouter une personne</button></div>';
     h += '<p class="note">« Max suite » : nombre maximal de jours de travail d’affilée pour cette personne (vide = règle générale). « Week-ends » vide = automatique (90–80 % : 2, 70–60 % : 1 à 2, 50 % : 1, ajusté au nombre de week-ends du mois). Rôle « Administratif » : la personne reçoit des CS en semaine et ne compte pas dans les 4 horaires.</p>';
+    h += wishSettings(ro);
     h += '<h3>Règles</h3><div class="rules">' +
       '<label>Heures par jour<input type="text" id="r-hpd" value="' + hh + ':' + String(mm).padStart(2, '0') + '"' + ro + '></label>' +
       '<label>Jours de suite au maximum (règle générale)<input type="number" id="r-max" min="3" max="7" value="' + r.maxConsecutive + '"' + ro + '></label>' +
@@ -634,6 +787,63 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
     h += '<h3>Sauvegarde</h3><p class="note">Exportez l’équipe et les plannings dans un fichier, pour les garder ou les reprendre dans une autre copie de l’application.</p><div class="toolbar"><button class="btn" id="exportJson">Exporter les données (JSON)</button>' +
       (state.canWrite ? '<label class="btn" for="importFile">Importer une sauvegarde…</label><input type="file" id="importFile" accept=".json,application/json" hidden>' : '') + '</div>';
     el.innerHTML = h;
+    if (focusId && $(focusId)) $(focusId).focus({ preventScroll: true });
+  }
+
+  function wishSettings(ro) {
+    var h = '<h3>Désirs et rythme de travail</h3><p class="note">Ouvrez une fiche pour noter les désirs qui reviennent chaque semaine et le rythme préféré. Pour une date précise, utilisez le bouton « Désir » au-dessus du planning.</p><div class="wcards">';
+    var list = staff().filter(function (s) { return s.role !== 'admin'; });
+    list.forEach(function (s) {
+      var sid = esc(s.id), open = !!state.openWish[s.id], desirs = s.desirs || {};
+      var days = WEEK.filter(function (w) { return desirs[w] && desirs[w].non && desirs[w].non.length; });
+      var once = (state.plan.wishes || {})[s.id] || {}, onceDays = Object.keys(once).sort(function (a, b) { return a - b; });
+      var chips = '';
+      if (s.rythme) chips += '<span class="wchip">' + (s.rythme === 'lisse' ? 'Lissé' : 'Condensé') + '</span>';
+      days.forEach(function (w) { chips += '<span class="wchip">' + DOW2[w] + ' : ' + P.describeWish(desirs[w].non) + '</span>'; });
+      if (onceDays.length) chips += '<span class="wchip">' + onceDays.length + ' ponctuel(s) en ' + MONTHS[state.m - 1] + '</span>';
+      h += '<div class="wcard" data-sid="' + sid + '"><button type="button" class="wcard-head" id="wh-' + sid + '" data-wopen aria-expanded="' + open + '"><strong>' + esc(displayName(s)) + '</strong>' + (chips || '<span class="muted" style="font-size:12px">Aucun désir</span>') + '<span class="chev">' + (open ? '▲' : '▼') + '</span></button>';
+      if (open) {
+        h += '<div class="wcard-body"><h4>Rythme préféré</h4><div class="seg">' + [['', 'Sans préférence'], ['lisse', 'Lissé'], ['condense', 'Condensé']].map(function (o) { return '<button type="button" id="wr-' + sid + '-' + o[0] + '" data-rythme="' + o[0] + '" aria-pressed="' + ((s.rythme || '') === o[0]) + '"' + ro + '>' + o[1] + '</button>'; }).join('') + '</div><div class="note">' + RHYTHM_TXT[s.rythme || ''] + '</div>';
+        h += '<h4>Chaque semaine</h4><div class="note">Touchez une case pour exclure (✕) un horaire ce jour-là. « Ferme » = impératif, « Souple » = si possible.</div><table class="wmatrix"><thead><tr><th class="row"></th>' + WEEK.map(function (w) { return '<th>' + DOW2[w] + '</th>'; }).join('') + '</tr></thead><tbody>';
+        P.SHIFTS.forEach(function (c) {
+          h += '<tr><th class="row">' + c + '<small>' + SHIFT_SUB[c] + '</small></th>' + WEEK.map(function (w) {
+            var no = !!(desirs[w] && desirs[w].non && desirs[w].non.indexOf(c) >= 0);
+            return '<td><button type="button" id="wm-' + sid + '-' + w + '-' + c + '" data-wd="' + w + '" data-wc="' + c + '" aria-pressed="' + no + '" aria-label="' + DAYS[w] + ' ' + c + (no ? ' exclu' : ' possible') + '"' + ro + '>' + (no ? '✕' : '✓') + '</button></td>';
+          }).join('') + '</tr>';
+        });
+        if (days.length) h += '<tr><th class="row"><small>Niveau</small></th>' + WEEK.map(function (w) {
+          if (days.indexOf(w) < 0) return '<td></td>';
+          return '<td><button type="button" class="lvl" id="wl-' + sid + '-' + w + '" data-wlvl="' + w + '" aria-label="' + DAYS[w] + ' : désir ' + level(desirs[w]) + ', toucher pour changer"' + ro + '>' + (desirs[w].souple ? 'Souple' : 'Ferme') + '</button></td>';
+        }).join('') + '</tr>';
+        h += '</tbody></table>';
+        if (days.length) h += '<ul class="wlist">' + days.map(function (w) { return '<li><span>Le <strong>' + DAYS[w] + '</strong> : ' + P.describeWish(desirs[w].non) + ' <span class="muted">· ' + level(desirs[w]) + '</span></span></li>'; }).join('') + '</ul>';
+        if (onceDays.length) h += '<h4>Ponctuels — ' + MONTHS[state.m - 1] + ' ' + state.y + '</h4><ul class="wlist">' + onceDays.map(function (d) { var o = once[d]; return '<li><span>' + DAYS[dowOf(+d)] + ' ' + d + ' : ' + P.describeWish(o.non || []) + ((o.non || []).length ? ' <span class="muted">· ' + level(o) + '</span>' : '') + '</span>' + (state.canWrite ? '<span><button type="button" class="btn" data-pedit="' + esc(d) + '">Modifier</button></span>' : '') + '</li>'; }).join('') + '</ul>';
+        h += '</div>';
+      }
+      h += '</div>';
+    });
+    if (!list.length) h += '<p class="note">Aucune personne en soins pour l’instant.</p>';
+    return h + '</div>';
+  }
+
+  /* Clic dans une fiche « désirs » ; renvoie true s'il a été traité. */
+  function wishSettingsClick(t) {
+    var card = t.closest('.wcard'); if (!card) return false;
+    var s = person(card.dataset.sid); if (!s) return true;
+    if (t.hasAttribute('data-wopen')) { state.openWish[s.id] = !state.openWish[s.id]; renderSettings(); return true; }
+    if (!state.canWrite) return true;
+    if (t.dataset.pedit !== undefined) { openWish(s.id, +t.dataset.pedit); return true; }
+    var desirs = s.desirs || {};
+    if (t.dataset.rythme !== undefined) { if (t.dataset.rythme) s.rythme = t.dataset.rythme; else delete s.rythme; }
+    else if (t.dataset.wc) {
+      var w = t.dataset.wd, c = t.dataset.wc, old = desirs[w] || { non: [], souple: false };
+      var had = old.non.indexOf(c) >= 0, non = P.SHIFTS.filter(function (k) { return k === c ? !had : old.non.indexOf(k) >= 0; });
+      if (non.length) desirs[w] = { non: non, souple: !!old.souple }; else delete desirs[w];
+      s.desirs = desirs;
+    } else if (t.dataset.wlvl !== undefined) { var x = desirs[t.dataset.wlvl]; if (x) x.souple = !x.souple; }
+    else return true;
+    save('team'); render();
+    return true;
   }
 
   function staffEdit(i, f, v) {
@@ -647,6 +857,8 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   /* ---------- événements ---------- */
   $('gridwrap').addEventListener('click', function (e) { var b = e.target.closest('.cell'); if (b && !b.disabled) paint(b.dataset.sid, b.dataset.d); });
   $('palette').addEventListener('click', function (e) { var b = e.target.closest('.brush'); if (!b) return; state.brush = b.dataset.brush; renderPalette(); });
+  $('wishDlg').addEventListener('click', wishClick);
+  $('wishDlg').addEventListener('close', function () { state.dlg = null; });
   $('genBtn').onclick = generate;
   $('undoBtn').onclick = undo;
   $('clearBtn').onclick = clearGenerated;
@@ -674,6 +886,7 @@ textarea.csv { width: 100%; min-height: 140px; font-family: ui-monospace, Menlo,
   st.addEventListener('click', function (e) {
     var t = e.target.closest('button'); if (!t) return;
     if (t.id === 'exportJson') { exportJson(); return; }
+    if (wishSettingsClick(t)) return;
     if (!state.canWrite) return;
     if (t.dataset.w !== undefined) {
       var row = t.closest('.staff-row'), s = state.team.staff[+row.dataset.i], w = +t.dataset.w, ex = (s.joursInterdits || []).slice(), k = ex.indexOf(w);
